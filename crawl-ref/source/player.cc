@@ -7245,6 +7245,8 @@ bool player::can_see_invisible(bool calc_unid, bool items) const
     if (in_good_standing(GOD_ASHENZARI, 2))
         return true;
 
+    if (species == SP_RED_MANDRAKE) return true;  // this is to work around the Acute Vision + Blurry Vision 3 conflicting
+
     return false;
 }
 

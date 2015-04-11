@@ -493,7 +493,7 @@ bool can_wear_armour(const item_def &item, bool verbose, bool ignore_temporary)
         if (slot == EQ_HELMET && is_hard_helmet(item))
         {
         if (verbose)
-            mpr("You are not appreciating the idea of mushing your weirdly shaped inside that helmet.");
+            mpr("You are not appreciating the idea of mushing your weirdly shaped head inside that helmet.");
         return false;
         }
 

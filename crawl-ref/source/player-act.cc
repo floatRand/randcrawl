@@ -602,6 +602,11 @@ static string _foot_name_singular(bool *can_plural)
         return "underbelly";
     }
 
+    if (you.species == SP_RED_MANDRAKE)
+    {
+        return "roots";
+    }
+
     if (you.species == SP_FELID)
         return "paw";
 

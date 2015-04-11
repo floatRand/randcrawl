@@ -732,10 +732,11 @@ static const map<species_type, species_def> species_data =
     HT_LAND, US_ALIVE, SIZE_MEDIUM,
     7, 9, 10, // 26
     { STAT_INT, STAT_DEX }, 4,
-    { { MUT_ACUTE_VISION, 1, 1 },  { MUT_TORMENT_RESISTANCE, 1, 1 },  { MUT_BLURRY_VISION, 3, 1 },
+    { { MUT_TORMENT_RESISTANCE, 1, 1 },  { MUT_BLURRY_VISION, 3, 1 },
       { MUT_MANDRAKE_SCREAM, 1, 1 }, { MUT_MANDRAKE_LIGNIFY, 1, 14 }, { MUT_POWERED_BY_DEATH, 1, 1 },
       { MUT_POWERED_BY_DEATH, 1, 21 }, { MUT_DEFORMED, 1, 1 }, { MUT_POISON_RESISTANCE, 1, 1 }, },
-    { "You heal very slowly.", "You can shield from corrosion.", "Your tissues are vulnerable to fire." },
+    { "You rely on non-visual senses to perceive, allowing you to see invisible.", "You heal very slowly.",
+      "You can shield from corrosion.", "Your tissues are vulnerable to fire." },
     { "acid resistance","fire vulnerability","slow repair"},
     { JOB_HUNTER, JOB_ASSASSIN, JOB_EARTH_ELEMENTALIST, JOB_VENOM_MAGE, JOB_SUMMONER,
       JOB_BERSERKER, JOB_ABYSSAL_KNIGHT },
