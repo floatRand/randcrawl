@@ -174,7 +174,7 @@ static const species_type species_order[] =
     SP_TENGU,          SP_BASE_DRACONIAN,
     SP_GARGOYLE,       SP_FORMICID,
     // mostly human shape but made of a strange substance
-    SP_VINE_STALKER,
+    SP_VINE_STALKER, SP_RED_MANDRAKE,
     // celestial species
     SP_DEMIGOD,        SP_DEMONSPAWN,
     // undead species

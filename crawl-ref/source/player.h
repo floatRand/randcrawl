@@ -463,6 +463,7 @@ public:
     bool is_banished() const;
     bool is_web_immune() const;
     bool cannot_speak() const;
+    bool cannot_feel_pain() const;
     bool invisible() const;
     bool can_see_invisible() const;
     bool can_see_invisible(bool unid, bool items = true) const;

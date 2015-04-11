@@ -544,7 +544,7 @@ static const map<species_type, species_def> species_data =
     MONS_MUMMY,
     HT_LAND, US_UNDEAD, SIZE_MEDIUM,
     11, 7,  7, // 25
-    { STAT_STR, STAT_INT, STAT_DEX }, 5,
+    set<stat_type>(), 28, // No stat gain
     { { MUT_NEGATIVE_ENERGY_RESISTANCE, 3, 1 }, { MUT_COLD_RESISTANCE, 1, 1 },
       { MUT_TORMENT_RESISTANCE, 1, 1 },
       { MUT_UNBREATHING, 1, 1 },
@@ -687,7 +687,7 @@ static const map<species_type, species_def> species_data =
     MONS_VAMPIRE,
     HT_LAND, US_SEMI_UNDEAD, SIZE_MEDIUM,
     7, 10, 9, // 26
-    { STAT_INT, STAT_DEX }, 5,
+    set<stat_type>(), 28, // No stat gain
     { { MUT_FANGS, 3, 1 }, { MUT_ACUTE_VISION, 1, 1 },
       { MUT_UNBREATHING, 1, 1 }, },
     {},
@@ -721,6 +721,28 @@ static const map<species_type, species_def> species_data =
     { SK_MACES_FLAILS, SK_AXES, SK_POLEARMS, SK_LONG_BLADES, SK_STAVES,
       SK_BOWS, SK_CROSSBOWS, SK_SLINGS },
 } },
+
+{ SP_RED_MANDRAKE, {
+    "RM",
+    "Red Mandrake", nullptr, nullptr,
+    SPF_NO_HAIR,
+    -1, 0, 0,
+    15, 4,
+    MONS_RED_MANDRAKE,
+    HT_LAND, US_ALIVE, SIZE_MEDIUM,
+    7, 9, 10, // 26
+    { STAT_INT, STAT_DEX }, 4,
+    { { MUT_ACUTE_VISION, 1, 1 },  { MUT_TORMENT_RESISTANCE, 1, 1 },  { MUT_BLURRY_VISION, 3, 1 },
+      { MUT_MANDRAKE_SCREAM, 1, 1 }, { MUT_MANDRAKE_LIGNIFY, 1, 14 }, { MUT_POWERED_BY_DEATH, 1, 1 },
+      { MUT_POWERED_BY_DEATH, 1, 21 }, { MUT_DEFORMED, 1, 1 }, { MUT_POISON_RESISTANCE, 1, 1 }, },
+    { "You heal very slowly.", "You can shield from corrosion.", "Your tissues are vulnerable to fire." },
+    { "acid resistance","fire vulnerability","slow repair"},
+    { JOB_HUNTER, JOB_ASSASSIN, JOB_EARTH_ELEMENTALIST, JOB_VENOM_MAGE, JOB_SUMMONER,
+      JOB_BERSERKER, JOB_ABYSSAL_KNIGHT },
+    { SK_MACES_FLAILS, SK_POLEARMS, SK_STAVES,
+      SK_BOWS, SK_SLINGS },
+} },
+
 #if TAG_MAJOR_VERSION == 34
 { SP_SLUDGE_ELF, {
     "SE",

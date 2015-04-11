@@ -341,9 +341,9 @@ static const mutation_def mut_data[] =
 { MUT_TELEPORT,                       3,  3,  MUTFLAG_BAD, false,
   "teleportitis",
 
-  {"You are occasionally teleported to nearby monsters.",
-   "You are sometimes teleported to nearby monsters.",
-   "You are often teleported to nearby monsters."},
+  {"Space occasionally distorts in your vicinity.",
+   "Space sometimes distorts in your vicinity.",
+   "Space frequently distorts in your vicinity."},
 
   {"You feel weirdly uncertain.",
    "You feel even more weirdly uncertain.",
@@ -750,6 +750,38 @@ static const mutation_def mut_data[] =
   {"", "", ""},
 
   "ability to restore your body",
+},
+
+{ MUT_MANDRAKE_SCREAM,  0,  1, MUTFLAG_GOOD, false,
+  "dreadful scream",
+
+  {"You can sow terror with your earpiercing scream.",
+   "",
+   ""},
+
+  {"You can scream loudly to terrorize creatures around.",
+   "",
+   ""},
+
+  {"", "", ""},
+
+  "ability to induce fear with scream",
+},
+
+{ MUT_MANDRAKE_LIGNIFY,  0,  1, MUTFLAG_GOOD, false,
+  "tree form",
+
+  {"You can assume form of a tree.",
+   "",
+   ""},
+
+  {"You can now assume form of a tree.",
+   "",
+   ""},
+
+  {"", "", ""},
+
+  "ability to assume form of a tree",
 },
 
 { MUT_NECRO_ENHANCER,     0,  2, MUTFLAG_GOOD, false,

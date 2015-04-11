@@ -1072,6 +1072,19 @@ bool physiology_mutation_conflict(mutation_type mutat)
             return true;
         }
     }
+
+    if (you.species == SP_RED_MANDRAKE)
+    {
+        // Red mandrakes have blurry vision 3 from getgo, as well as acute vision. Also disable them regeneration
+        if (mutat == MUT_ACUTE_VISION
+            || mutat == MUT_BLURRY_VISION
+            || mutat == MUT_REGENERATION
+            || mutat == MUT_SLOW_HEALING
+            )
+        {
+            return true;
+        }
+    }
 #if TAG_MAJOR_VERSION == 34
 
     // Heat doesn't hurt fire, djinn don't care about hunger.

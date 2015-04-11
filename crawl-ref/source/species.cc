@@ -89,6 +89,8 @@ string species_walking_verb(species_type sp)
         return "Wriggl";
     case SP_VINE_STALKER:
         return "Stalk";
+    case SP_RED_MANDRAKE:
+        return "Slither";
     default:
         return "Walk";
     }

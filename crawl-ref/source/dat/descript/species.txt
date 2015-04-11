@@ -125,3 +125,8 @@ Vine Stalker
 Frail symbionts, Vine Stalkers cannot regain health from devices or potions.
 Their magical reserves absorb damage, and they pack a magic-restoring bite.
 %%%%
+Red Mandrake
+
+Strange creatures resembling plants. They can emit a scream that can scare 
+their enemies away, but have trouble reading scrolls and are flammable.
+%%%%

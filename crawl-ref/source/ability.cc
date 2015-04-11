@@ -180,8 +180,8 @@ ability_type god_abilities[NUM_GODS][MAX_GOD_ABILITIES] =
     { ABIL_NON_ABILITY, ABIL_NON_ABILITY, ABIL_CHEIBRIADOS_DISTORTION,
       ABIL_CHEIBRIADOS_SLOUCH, ABIL_CHEIBRIADOS_TIME_STEP },
     // Ashenzari
-    { ABIL_NON_ABILITY, ABIL_ASHENZARI_SCRYING, ABIL_NON_ABILITY,
-      ABIL_NON_ABILITY, ABIL_ASHENZARI_TRANSFER_KNOWLEDGE },
+    { ABIL_NON_ABILITY, ABIL_NON_ABILITY, ABIL_NON_ABILITY,
+      ABIL_ASHENZARI_SCRYING, ABIL_ASHENZARI_TRANSFER_KNOWLEDGE },
     // Dithmenos
     { ABIL_NON_ABILITY, ABIL_DITHMENOS_SHADOW_STEP, ABIL_NON_ABILITY,
       ABIL_NON_ABILITY, ABIL_DITHMENOS_SHADOW_FORM },
@@ -240,6 +240,9 @@ static const ability_def Ability_List[] =
 
     { ABIL_DIG, "Dig", 0, 0, 0, 0, 0, ABFLAG_INSTANT},
     { ABIL_SHAFT_SELF, "Shaft Self", 0, 0, 250, 0, 0, ABFLAG_DELAY},
+
+    { ABIL_DREADFUL_SCREAM, "Dreadful Scream", 0, 0, 150, 0, 0, ABFLAG_BREATH},
+    { ABIL_BECOME_TREE, "Become Tree", 0, 0, 300, 0, 0, ABFLAG_EXHAUSTION},
 
     // EVOKE abilities use Evocations and come from items.
     // Teleportation and Blink can also come from mutations
@@ -1093,6 +1096,15 @@ talent get_talent(ability_type ability, bool check_confused)
     case ABIL_SHAFT_SELF:
         failure = 0;
         break;
+
+     case ABIL_DREADFUL_SCREAM:       // Red Mandrake
+        failure = 35 - (2 * you.experience_level);
+        break;
+    case ABIL_BECOME_TREE:       // Red Mandrake
+        failure = 60 - (2 * you.experience_level);
+        break;
+
+
         // end species abilities (some mutagenic)
 
         // begin demonic powers {dlb}
@@ -2168,6 +2180,55 @@ static spret_type _do_ability(const ability_def& abil, bool fail)
         else
             return SPRET_ABORT;
         break;
+
+    case ABIL_DREADFUL_SCREAM:
+    { // the ability of mandrakes. Hopefully works without problems.
+        fail_check();
+        if (you.duration[DUR_EXHAUSTED])
+        {
+            mpr("You're too exhausted to scream.");
+            return SPRET_ABORT;
+        }
+         if (you.duration[DUR_BREATH_WEAPON])
+        {
+            mpr("You are out of breath!");
+            return SPRET_ABORT;
+        }
+          if (you.duration[DUR_SILENCE])
+        {
+            mpr("You cannot scream while silenced.");
+            return SPRET_ABORT;
+        }
+        mpr("You let out a loud ear-rending, soul-chilling scream. In strain of the scream, your body rots!");
+          you.increase_duration(DUR_BREATH_WEAPON, 18 + random2(16));
+          rot_hp(roll_dice(1, 2));
+          sonic_damage(true);
+        if (your_spells(SPELL_CAUSE_FEAR, 60 + you.experience_level * 7, false  ) == SPRET_ABORT)
+        {
+            return SPRET_ABORT;
+        }
+        break;
+    }
+
+    case ABIL_BECOME_TREE:
+    { // another ability, they get it later
+        fail_check();
+        if (you.duration[DUR_EXHAUSTED])
+        {
+            mpr("You're too exhausted to become a tree.");
+            return SPRET_ABORT;
+        }
+
+        mpr("You call upon your ancestry...");
+        you.increase_duration(DUR_EXHAUSTED, 100 + random2(40));
+        transform(80, TRAN_TREE );
+        you.transform_uncancellable = true;
+
+        break;
+    }
+
+
+
 
     case ABIL_DELAYED_FIREBALL:
     {
@@ -3584,6 +3645,11 @@ vector<talent> your_talents(bool check_confused, bool include_unusable)
             _add_talent(talents, ABIL_SHAFT_SELF, check_confused);
         }
     }
+
+    if (player_mutation_level(MUT_MANDRAKE_LIGNIFY))
+        _add_talent(talents, ABIL_BECOME_TREE, check_confused);
+    if (player_mutation_level(MUT_MANDRAKE_SCREAM))
+        _add_talent(talents, ABIL_DREADFUL_SCREAM, check_confused);
 
     // Spit Poison, possibly upgraded to Breathe Poison.
     if (player_mutation_level(MUT_SPIT_POISON) == 3)

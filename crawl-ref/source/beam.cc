@@ -3556,7 +3556,8 @@ void bolt::affect_player_enchantment(bool resistible)
         }
 
         if (aux_source.empty())
-            aux_source = "by nerve-wracking pain";
+            if(!you.cannot_feel_pain()) aux_source = "by nerve-wracking pain";
+            else aux_source = "by torrent of negative energy";
 
         if (origin_spell == SPELL_AGONY)
         {
@@ -3566,15 +3567,15 @@ void bolt::affect_player_enchantment(bool resistible)
                 break;
             }
 
-            mpr("Your body is wracked with pain!");
-
+            if(!you.cannot_feel_pain()) mpr("Your body is wracked with pain!");
+            else mpr("Violent malign energies shred through your body!");
             // On the player, Agony acts like single-target torment.
             internal_ouch(max(0, you.hp / 2 - 1));
         }
         else
         {
-            mpr("Pain shoots through your body!");
-
+            if(!you.cannot_feel_pain()) mpr("Pain shoots through your body!");
+            else mpr("Wave of negative energy shreds your being!");
             internal_ouch(damage.roll());
         }
         obvious_effect = true;
@@ -6567,3 +6568,4 @@ int ench_power_stepdown(int pow)
 {
     return stepdown_value(pow, 30, 40, 100, 120);
 }
+

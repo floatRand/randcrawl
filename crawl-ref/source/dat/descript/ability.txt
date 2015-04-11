@@ -1,4 +1,4 @@
-
+﻿
 %%%%
 No ability ability
 
@@ -116,6 +116,17 @@ Shaft Self ability
 
 Sends you to a random position one to three floors down, as if you jumped into
 a shaft trap. It takes some time to dig the shaft.
+%%%%
+Become Tree ability
+
+Become a tree, bolstering defense but leaving you rooted to ground. Improves 
+regeneration. Be warned, you cannot leave form voluntarily.
+%%%%
+Dreadful Scream ability
+
+Let out a chilling scream, scaring enemies away. Unnatural enemies are not
+affected. But be warned, the energy required for this scream eats away your
+flesh!
 %%%%
 Evoke Teleportation ability
 

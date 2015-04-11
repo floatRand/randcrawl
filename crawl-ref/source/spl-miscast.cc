@@ -1776,12 +1776,15 @@ void MiscastEffect::_necromancy(int severity)
                 you_msg = "You feel homesick.";
             break;
         case 2:
-            you_msg = "Pain shoots through your body.";
+            if(!you.cannot_feel_pain()) you_msg = "Pain shoots through your body.";
+            else you_msg = "Malign energies ripple through you.";
             mon_msg_seen = "@The_monster@ twitches violently.";
             break;
         case 3:
             if (you.species == SP_OCTOPODE)
                 you_msg = "You feel numb.";
+            else if(you.species == SP_RED_MANDRAKE)
+                you_msg = "You are briefly distraught.";
             else
                 you_msg = "Your bones ache.";
             mon_msg_seen = "@The_monster@ pauses, visibly distraught.";
@@ -1828,7 +1831,8 @@ void MiscastEffect::_necromancy(int severity)
             }
             else
             {
-                you_msg      = "Pain shoots through your body!";
+                if( !you.cannot_feel_pain() ) you_msg = "Pain shoots through your body!";
+                else you_msg = "A torrent of malign energies ripple through you!";
                 mon_msg_seen = "@The_monster@ convulses with pain!";
                 _ouch(5 + random2avg(15, 2));
             }
@@ -1900,8 +1904,10 @@ void MiscastEffect::_necromancy(int severity)
             }
             else
             {
-                you_msg      = "You convulse helplessly as pain tears through "
-                               "your body!";
+                if(!you.cannot_feel_pain()) you_msg      = "You convulse helplessly as pain tears through "
+                                                              "your body!";
+                else you_msg = "A torrent of negative energy shreds violently through your body!";
+
                 mon_msg_seen = "@The_monster@ convulses helplessly with pain!";
                 _ouch(15 + random2avg(23, 2));
             }

@@ -796,6 +796,7 @@ bool player_has_feet(bool temp)
     if (you.species == SP_NAGA
         || you.species == SP_FELID
         || you.species == SP_OCTOPODE
+        || you.species == SP_RED_MANDRAKE
 #if TAG_MAJOR_VERSION == 34
         || you.species == SP_DJINNI
 #endif
@@ -812,6 +813,8 @@ bool player_has_feet(bool temp)
 
     return true;
 }
+
+
 
 // Returns false if the player is wielding a weapon inappropriate for Berserk.
 bool berserk_check_wielded_weapon()
@@ -836,6 +839,15 @@ bool berserk_check_wielded_weapon()
     }
 
     return true;
+}
+
+ /** Small flavourly thing to handle pain-related spells. For pain-brand/miscasts, they
+ * are descriped of "something rends your life force" or something like that.
+ **/
+bool player::cannot_feel_pain() const
+{
+    if(species == SP_RED_MANDRAKE){ return true; }
+    return false;
 }
 
 // Looks in equipment "slot" to see if there is an equipped "sub_type".
@@ -1079,10 +1091,10 @@ int player_teleport(bool calc_unid)
     tp += 8 * you.wearing(EQ_RINGS, RING_TELEPORTATION, calc_unid);
 
     // artefacts
-    tp += 8 * you.scan_artefacts(ARTP_CAUSE_TELEPORTATION, calc_unid);
+    tp += you.scan_artefacts(ARTP_CAUSE_TELEPORTATION, calc_unid);
 
     // mutations
-    tp += player_mutation_level(MUT_TELEPORT) * 4;
+    tp += player_mutation_level(MUT_TELEPORT) * 3;
 
     return tp;
 }
@@ -1173,6 +1185,12 @@ int player_regen()
         else if (you.hunger_state >= HS_FULL)
             rr += 10; // Bonus regeneration for full vampires.
     }
+    if (you.species == SP_RED_MANDRAKE)
+        {
+            if(!you.form == TRAN_TREE) rr /= 2; // always heal rr despite enemies present etc, unless you are a TREE!
+
+        }
+
 #if TAG_MAJOR_VERSION == 34
 
     // Compared to other races, a starting djinni would have regen of 4 (hp)
@@ -1371,9 +1389,8 @@ int player_res_fire(bool calc_unid, bool temp, bool items)
     }
 
     // species:
-    if (you.species == SP_MUMMY)
+    if (you.species == SP_MUMMY || you.species == SP_RED_MANDRAKE)
         rf--;
-
 #if TAG_MAJOR_VERSION == 34
     if (you.species == SP_LAVA_ORC)
     {
@@ -1539,6 +1556,11 @@ bool player::res_corr(bool calc_unid, bool items) const
 
     if ((form_keeps_mutations() || form == TRAN_DRAGON)
         && species == SP_YELLOW_DRACONIAN)
+    {
+        return true;
+    }
+
+    if (form_keeps_mutations() && species == SP_RED_MANDRAKE)
     {
         return true;
     }
@@ -3613,7 +3635,7 @@ bool player::clarity(bool calc_unid, bool items) const
     if (player_mutation_level(MUT_CLARITY))
         return true;
 
-    if (in_good_standing(GOD_ASHENZARI, 3))
+    if (in_good_standing(GOD_ASHENZARI, 2))
         return true;
 
     return actor::clarity(calc_unid, items);
@@ -5871,7 +5893,7 @@ int player::skill(skill_type sk, int scale, bool real, bool drained) const
         level = min(level + 5 * scale, 27 * scale);
     if (penance[GOD_ASHENZARI])
         level = max(level - 4 * scale, level / 2);
-    else if (religion == GOD_ASHENZARI && piety_rank() > 3)
+    else if (religion == GOD_ASHENZARI && piety_rank() > 2)
     {
         if (skill_boost.count(sk)
             && skill_boost.find(sk)->second)
@@ -7220,7 +7242,7 @@ bool player::can_see_invisible(bool calc_unid, bool items) const
     if (player_mutation_level(MUT_EYEBALLS) == 3)
         return true;
 
-    if (in_good_standing(GOD_ASHENZARI, 3))
+    if (in_good_standing(GOD_ASHENZARI, 2))
         return true;
 
     return false;
@@ -8544,6 +8566,8 @@ string player::hands_act(const string &plural_verb,
     const bool space = !object.empty() && !_is_end_punct(object[0]);
     return "Your " + hands_verb(plural_verb) + (space ? " " : "") + object;
 }
+
+
 
 /**
  * Possibly drop a point of bone armour (from Cigotuvi's Embrace) when hit,

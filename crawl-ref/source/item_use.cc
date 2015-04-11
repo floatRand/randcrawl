@@ -483,6 +483,26 @@ bool can_wear_armour(const item_def &item, bool verbose, bool ignore_temporary)
         return false;
     }
 
+    if (you.species == SP_RED_MANDRAKE)
+    {
+        if(slot == EQ_BOOTS){
+        if (verbose)
+            mpr("You can't fit your roots in those tiny boots!");
+        return false;
+        }
+        if (slot == EQ_HELMET && is_hard_helmet(item))
+        {
+        if (verbose)
+            mpr("You are not appreciating the idea of mushing your weirdly shaped inside that helmet.");
+        return false;
+        }
+
+
+    }
+
+
+
+
     if (species_is_draconian(you.species) && slot == EQ_BODY_ARMOUR)
     {
         if (verbose)

@@ -563,11 +563,12 @@ void attack::pain_affects_defender()
     {
         if (defender_visible)
         {
-            special_damage_message =
-                make_stringf("%s %s in agony.",
-                             defender->name(DESC_THE).c_str(),
-                             defender->conj_verb("writhe").c_str());
+        if(defender->is_monster() || !you.cannot_feel_pain())
+             special_damage_message = make_stringf("%s %s in agony.", defender->name(DESC_THE).c_str(), defender->conj_verb("writhe").c_str());
+        else special_damage_message = make_stringf("%s %s from negative energy.", defender->name(DESC_THE).c_str(), defender->conj_verb("shudder").c_str());
         }
+
+
         special_damage += random2(1 + attacker->skill_rdiv(SK_NECROMANCY));
     }
 
