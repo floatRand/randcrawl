@@ -695,6 +695,15 @@ bolt mons_spell_beam(monster* mons, spell_type spell_cast, int power,
         beam.pierce   = true;
         break;
 
+    case SPELL_BOLT_OF_DISTORTION:
+        beam.name     = "bolt of distortion";
+        beam.damage   = dice_def(3, 8 + power / 11);
+        beam.colour   = MAGENTA;
+        beam.flavour  = BEAM_DISTORTION;
+        beam.hit      = 17 + power / 25;
+        beam.pierce   = true;
+        break;
+
     case SPELL_THROW_ICICLE:
         beam.name     = "shard of ice";
         beam.damage   = dice_def(3, 8 + power / 11);

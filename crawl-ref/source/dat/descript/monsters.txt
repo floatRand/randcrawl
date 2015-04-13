@@ -1,4 +1,4 @@
-%%%%
+﻿%%%%
 # Glyph-specific suffixes
 # Only for non-uniques nagas.
 __cap-N_suffix
@@ -144,6 +144,11 @@ with many colours.
 Ereshkigal
 
 A fearsome arch-fiend who rules the deathly netherworld of Tartarus.
+%%%%
+Gressil
+
+A powerful creature of the abyss, cloaked in clouds of seething chaos. Powerful
+distortional energies crackle around him.
 %%%%
 Erica
 

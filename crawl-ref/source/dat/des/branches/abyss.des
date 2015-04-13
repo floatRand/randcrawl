@@ -5,6 +5,7 @@
 # Abyssal vaults should usually be minivaults and floating vaults, no larger
 # than 28x23. Encompass vaults will be rejected at compile time, and
 # other orientations will produce weird results.
+: require('dlua/vault.lua')
 
 {{
  -- Since abyssal stairs don't spawn at the bottom of the Abyss,
@@ -35,7 +36,13 @@ function abyss_entry(e, glyph)
     e.kfeat(glyph .. ' = enter_abyss')
   end
 end
+
+function gressil_warning()
+ crawl.mpr("You sense a powerful and corrupting presence nearby...", "warning");
+end
+
 }}
+
 
 ###############################################################################
 # Abyss entries.
@@ -1652,7 +1659,7 @@ ENDMAP
 
 
 NAME: nicolae_abyss_rune_containment_breach
-TAGS: abyss_rune unrand patrolling
+TAGS: abyss_rune patrolling
 SUBST: N = nn., n = nnnc
 NSUBST: v = 2:v / *:v.
 KITEM: O = abyssal rune of zot
@@ -1678,6 +1685,162 @@ MAP
    ....NNNNN....
      .........
        .....
+ENDMAP
+
+NAME:  rand_gressil_vault
+TAGS:  abyss_rune gressil unrand no_monster_gen patrolling
+DEPTH: Abyss:5
+WEIGHT: 50
+KMONS:  1 = gressil 
+KITEM:  O = abyssal rune of Zot
+KITEM: d = randbook numspells:7 owner:Gressil disc:translocations/potion of experience/triple sword unrand:plutonium_sword
+KITEM: e = manual of translocations/manual of summoning/manual of spellcasting/acquire wand 
+KITEM: f = scroll of acquirement/randart any weapon ego:distortion
+KITEM: g = randart cloak/randart any jewellery/acquire armour/acquire wand
+KFEAT:  _ = altar_lugonu
+TILE:   v = wall_hall
+COLOUR:  v = warp
+FTILE:  ._+O1|abcdefghi$b = floor_crystal_squares
+SUBST:  ' = .
+veto {{ return you.uniques("Gressil") }}
+: gressil_warning()
+MAP
+    '''''''''''
+   ''vvvvvvvvv''
+  'vvvvvvvvvvvvv'
+''vvvvvvv_vvvvvvv''
+'vvvvfev.O.v$$vvvv'
+'vvvdfe+...+$$$vvv'
+'vvvgg|vv.vv$$$vvv'
+'vvvvvvvv+vvvvvvvv'
+'v...............v'
+'v.......1.......v'
+'v...............v'
+'v...............v'
+'v...............v'
+'v...............v'
+'v...............v'
+'v...............v'
+'v...............v'
+'v......v.v......v'
+'vv....vv.vv....vv'
+'vvvvvvvv.vvvvvvvv'
+'v'v'vvvv+vvvv'v'v'
+'''v'v''v@v''v'v'''
+   '''''''''''''
+ENDMAP
+
+NAME:  rand_gressil_vault_cross
+TAGS:  abyss_rune gressil unrand no_monster_gen patrolling
+DEPTH: Abyss:5
+WEIGHT: 70
+KMONS:  1 = gressil 
+KITEM:  O = abyssal rune of Zot
+KITEM: d = randbook numspells:7 owner:Gressil disc:translocations/potion of experience/triple sword unrand:plutonium_sword
+KITEM: e = manual of translocations/manual of summoning/manual of spellcasting/acquire wand 
+KITEM: f = scroll of acquirement/randart any weapon ego:distortion
+KITEM: g = randart cloak/randart any jewellery/acquire armour/acquire wand
+KFEAT:  _ = altar_lugonu
+TILE:   v = wall_hall
+COLOUR:  v = warp
+FTILE:  ._+O1|abcdefghi$b = floor_crystal_squares
+SUBST:  ' = .
+veto {{ return you.uniques("Gressil") }}
+: gressil_warning()
+MAP
+     '''''''
+ '''''vvvvv'''''
+ 'vvvvvv_vvvvvv'
+ 'vvvvv...vvvvv'
+@'+..vv...+eevv'
+ 'vv.vv...vvdvv''
+'vvv+v.....vvvvv'
+'vv...........vv'
+'v_.....1....._v'
+'vv...........vv'
+'vvvvv.....v+vvv'
+ 'vvfvv...vvgvv''
+ 'vvfg+...vO$vv'
+ 'vvvvv...vvvvv'
+ 'vvvvvv_vvvvvv'
+ '''''vvvvv'''''
+     '''''''
+ENDMAP
+
+NAME:  rand_gressil_vault_arrow
+TAGS:  abyss_rune gressil unrand no_monster_gen patrolling
+DEPTH: Abyss:5
+WEIGHT: 70
+KMONS:  1 = gressil 
+KITEM:  O = abyssal rune of Zot
+KITEM: d = randbook numspells:7 owner:Gressil disc:translocations/potion of experience/triple sword unrand:plutonium_sword
+KITEM: e = manual of translocations/manual of summoning/manual of spellcasting/acquire wand 
+KITEM: f = scroll of acquirement/randart any weapon ego:distortion
+KITEM: g = randart cloak/randart any jewellery/acquire armour/acquire wand
+KFEAT:  _ = altar_lugonu
+TILE:   v = wall_hall
+COLOUR:  v = warp
+FTILE:  ._+O1|abcdefghi$b = floor_crystal_squares
+SUBST:  ' = .
+veto {{ return you.uniques("Gressil") }}
+: gressil_warning()
+MAP
+      '''''      
+    '''vvv'''    
+   ''vvv_vvv''   
+  ''vv.....vv''  
+ ''vv.......vv'' 
+''vv....1....vv''
+'vv...........vv'
+'vv+v.......v+vv'
+'vf$vv.....vv$$v'
+'vfgvvv...vvvgev'
+'v+vv'v...v'vvev'
+'vOv''v...v''vdv'
+'vvv''v...v''vvv'
+''''''v...v''''''
+''v'''v...v'''v' 
+ ''''vv...vv'''' 
+   'vvvv.vvvv''
+  'vvvvv+vvvvv'
+  ''''''@''''''
+ENDMAP
+
+NAME:  rand_gressil_vault_cube
+TAGS:  abyss_rune gressil unrand no_monster_gen patrolling
+DEPTH: Abyss:5
+WEIGHT: 70
+KMONS:  1 = gressil 
+KITEM:  O = abyssal rune of Zot
+KITEM: d = randbook numspells:7 owner:Gressil disc:translocations/potion of experience/triple sword unrand:plutonium_sword
+KITEM: e = manual of translocations/manual of summoning/manual of spellcasting/acquire wand 
+KITEM: f = scroll of acquirement/randart any weapon ego:distortion
+KITEM: g = randart cloak/randart any jewellery/acquire armour/acquire wand
+KFEAT:  _ = altar_lugonu
+TILE:   v = wall_hall
+COLOUR:  v = warp
+FTILE:  ._+O1|abcdefghi$b = floor_crystal_squares
+SUBST:  ' = .
+veto {{ return you.uniques("Gressil") }}
+: gressil_warning()
+MAP
+'''''''''''''''''
+'vvvvvvvvvvvvvvv'
+@+.............+'
+'v.vvvvv+vvvvv.v'
+'v.v.........v.v'
+'v.v.........v.v'
+'v.v..vvvvv..v.v'
+'v.v..vdegv..v.v'
+'v.+..v|Ofv..+.v'
+'v.v..vgfev..v.v'
+'v.v..vv+vv..v.v'
+'v.v.........v.v'
+'v.v....1....v.v'
+'v.vvvv...vvvv.v'
+'+.vvvvv_vvvvv.+'
+'vvvvvvvvvvvvvvv'
+'''''''''''''''''
 ENDMAP
 
 ###############################################################################

@@ -2878,6 +2878,20 @@ static void _post_monster_move(monster* mons)
             }
     }
 
+    if (mons->type == MONS_GRESSIL)
+    {
+        cloud_type ctype = CLOUD_CHAOS;
+
+        for (adjacent_iterator ai(mons->pos()); ai; ++ai)
+            if (!cell_is_solid(*ai)
+                && (env.cgrid(*ai) == EMPTY_CLOUD
+                    || env.cloud[env.cgrid(*ai)].type == ctype))
+            {
+                place_cloud(ctype, *ai, 2 + random2(6), mons);
+            }
+
+    }
+
     if (mons->type == MONS_WATER_NYMPH)
     {
         for (adjacent_iterator ai(mons->pos(), false); ai; ++ai)

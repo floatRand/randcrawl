@@ -922,6 +922,16 @@ static const mon_spellbook mspell_list[] =
       }
     },
 
+    {  MST_GRESSIL,
+      {
+       { SPELL_SHADOW_CREATURES, 18, MON_SPELL_DEMONIC },
+       { SPELL_BOLT_OF_DISTORTION, 35, MON_SPELL_DEMONIC },
+       { SPELL_MALIGN_GATEWAY, 25, MON_SPELL_DEMONIC },
+       { SPELL_BLINK, 20, MON_SPELL_DEMONIC },
+       { SPELL_TELEPORT_OTHER, 25, MON_SPELL_DEMONIC | MON_SPELL_EMERGENCY },
+      }
+    },
+
     {  MST_ANTAEUS,
       {
        { SPELL_LIGHTNING_BOLT, 24, MON_SPELL_DEMONIC },

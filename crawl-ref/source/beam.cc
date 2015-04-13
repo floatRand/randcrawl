@@ -52,6 +52,7 @@
 #include "spl-clouds.h"
 #include "spl-damage.h"
 #include "spl-goditem.h"
+#include "spl-miscast.h"
 #include "spl-monench.h"
 #include "spl-other.h"
 #include "spl-summoning.h"
@@ -3749,6 +3750,7 @@ void bolt::affect_player_enchantment(bool resistible)
             obvious_effect = true;
         break;
 
+
     default:
         // _All_ enchantments should be enumerated here!
         mpr("Software bugs nibble your toes!");
@@ -3996,6 +3998,12 @@ void bolt::affect_player()
 
     if (origin_spell == SPELL_QUICKSILVER_BOLT)
         debuff_player();
+
+    if (origin_spell == SPELL_BOLT_OF_DISTORTION)
+    {
+       if(!( you.stasis() || you.no_tele())) MiscastEffect(&you, agent(), SPELL_MISCAST, SPTYP_TRANSLOCATION, 9, 90, "bolt of distortion", NH_NEVER );
+       else MiscastEffect(&you, agent(), SPELL_MISCAST, SPTYP_TRANSLOCATION, 6, 90, "bolt of distortion", NH_NEVER );
+    }
 
     dprf(DIAG_BEAM, "Damage: %d", hurted);
 
@@ -5759,6 +5767,19 @@ mon_resist_type bolt::apply_enchantment_to_monster(monster* mon)
         return MON_AFFECTED;
     }
 
+    case BEAM_DISTORTION:
+    {
+        if(!mon->no_tele()){
+             MiscastEffect(mon, agent(), SPELL_MISCAST , SPTYP_TRANSLOCATION, 9, 90, "beam of distortion", NH_NEVER);
+             obvious_effect = true;
+             return MON_AFFECTED;
+        }
+        else MiscastEffect(mon, agent(), SPELL_MISCAST , SPTYP_TRANSLOCATION, 3, 90, "beam of distortion", NH_NEVER);
+             obvious_effect = true;
+             return MON_AFFECTED;
+
+    }
+
     default:
         break;
     }
@@ -6519,7 +6540,7 @@ static string _beam_type_name(beam_type type)
     case BEAM_DEATH_RATTLE:          return "breath of the dead";
     case BEAM_RESISTANCE:            return "resistance";
     case BEAM_ATTRACT:               return "attraction";
-
+    case BEAM_DISTORTION:            return "distortion";
     case NUM_BEAMS:                  die("invalid beam type");
     }
     die("unknown beam type");

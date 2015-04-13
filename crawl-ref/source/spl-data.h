@@ -3619,6 +3619,17 @@ static const struct spell_desc spelldata[] =
 },
 
 {
+    SPELL_BOLT_OF_DISTORTION, "Bolt of Distortion",
+    SPTYP_TRANSLOCATION | SPTYP_CONJURATION,
+    SPFLAG_DIR_OR_TARGET | SPFLAG_NEEDS_TRACER,
+    6,
+    200,
+    7, 7,
+    6, 0,
+    nullptr,
+},
+
+{
     SPELL_NO_SPELL, "nonexistent spell",
     SPTYP_NONE,
     SPFLAG_TESTING,

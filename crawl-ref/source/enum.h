@@ -584,7 +584,7 @@ enum beam_type                  // bolt::flavour
     BEAM_RESISTANCE,
     BEAM_ATTRACT,
     BEAM_LAST_ENCHANTMENT = BEAM_ATTRACT,
-
+    BEAM_DISTORTION,
     BEAM_MEPHITIC,
     BEAM_INK,
     BEAM_HOLY_FLAME,
@@ -3371,6 +3371,8 @@ enum monster_type                      // menv[].type
     MONS_SALAMANDER_STORMCALLER,
     MONS_ENTROPY_WEAVER,
     MONS_MOON_TROLL,
+    MONS_GRESSIL,
+
 #endif
 
     NUM_MONSTERS,               // used for polymorph
@@ -4453,6 +4455,7 @@ enum spell_type
     SPELL_GRAVITAS,
     SPELL_CHANT_FIRE_STORM,
     SPELL_CHANT_WORD_OF_ENTROPY,
+    SPELL_BOLT_OF_DISTORTION,
     NUM_SPELLS
 };
 
@@ -4622,6 +4625,7 @@ enum zap_type
     ZAP_CORROSIVE_BOLT,
     ZAP_RANDOM_BOLT_TRACER,
     ZAP_SCATTERSHOT,
+    ZAP_DISTORTION,
 
     NUM_ZAPS
 };

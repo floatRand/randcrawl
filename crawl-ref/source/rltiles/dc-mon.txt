@@ -14,6 +14,7 @@ gloorx_vloq MONS_GLOORX_VLOQ
 lom_lobon MONS_LOM_LOBON
 mnoleg MONS_MNOLEG
 antaeus MONS_ANTAEUS
+gressil MONS_GRESSIL
 lernaean_hydra01 MONS_LERNAEAN_HYDRA
 lernaean_hydra02
 lernaean_hydra03

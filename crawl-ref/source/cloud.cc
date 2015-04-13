@@ -1003,6 +1003,8 @@ bool actor_cloud_immune(const actor *act, const cloud_struct &cloud)
         return act->res_negative_energy() >= 3;
     case CLOUD_TORNADO:
         return act->res_wind();
+    case CLOUD_CHAOS:
+        return act->type == MONS_GRESSIL;
     default:
         return false;
     }

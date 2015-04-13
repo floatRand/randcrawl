@@ -6891,6 +6891,19 @@ DUMMY(MONS_GOLEM, '8', LIGHTGREY, "golem")
     MONUSE_WEAPONS_ARMOUR, MONEAT_NOTHING, SIZE_LARGE, MON_SHAPE_HUMANOID
 },
 
+{
+    MONS_GRESSIL, '&', BLUE, "Gressil",
+    M_UNIQUE | M_FIGHTER | M_INVIS | M_SEE_INVIS | M_SPEAKS | M_MALE,
+    MR_RES_POISON | MR_RES_ELEC | MR_RES_NEG,
+    1300, 15, MONS_GRESSIL, MONS_GRESSIL, MH_DEMONIC, MAG_IMMUNE,
+    { {AT_HIT, AF_DISTORT, 40}, AT_NO_ATK, AT_NO_ATK, AT_NO_ATK },
+    { 18, 0, 0, 380 },
+    10, 15, MST_GRESSIL, CE_NOCORPSE, S_SHOUT,
+    I_HIGH, HT_LAND, FL_LEVITATE, 12, DEFAULT_ENERGY,
+    MONUSE_OPEN_DOORS, MONEAT_NOTHING, SIZE_LARGE, MON_SHAPE_HUMANOID
+},
+
+
 // Impossible to hit, impossible to damage, immune to everything,
 // unkillable, just sits there doing nothing but casting Shadow Creatures
 // over and over.

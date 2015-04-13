@@ -295,3 +295,7 @@ Xtahua title
 
 Xtahua the Ancient
 %%%%
+Gressil title
+
+Gressil the Grand Corruptor
+%%%%

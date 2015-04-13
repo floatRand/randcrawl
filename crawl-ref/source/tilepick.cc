@@ -2263,6 +2263,9 @@ tileidx_t tileidx_monster_base(int type, bool in_water, int colour, int number,
         return TILEP_MONS_ASMODEUS;
     case MONS_ERESHKIGAL:
         return TILEP_MONS_ERESHKIGAL;
+    case MONS_GRESSIL:
+        return TILEP_MONS_GRESSIL;
+
     }
 
     return TILEP_MONS_PROGRAM_BUG;
