@@ -3619,6 +3619,17 @@ static const struct spell_desc spelldata[] =
 },
 
 {
+    SPELL_EVOKE_LDECK_OF_WAR, "Evoke Legendary Deck of War",
+    SPTYP_CONJURATION,
+    SPFLAG_BATTLE | SPFLAG_MONSTER,
+    5,
+    200,
+    -1, -1,
+    3, 0,
+    nullptr,
+},
+
+{
     SPELL_BOLT_OF_DISTORTION, "Bolt of Distortion",
     SPTYP_TRANSLOCATION | SPTYP_CONJURATION,
     SPFLAG_DIR_OR_TARGET | SPFLAG_NEEDS_TRACER,

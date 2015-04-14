@@ -20,6 +20,7 @@
 #include "coordit.h"
 #include "database.h"
 #include "delay.h"
+#include "decks.h"
 #include "directn.h"
 #include "english.h"
 #include "env.h"
@@ -28,10 +29,14 @@
 #include "fight.h"
 #include "fprop.h"
 #include "godpassive.h"
+#include "ghost.h"
+#include "invent.h"
+#include "itemprop.h"
 #include "items.h"
 #include "libutil.h"
 #include "losglobal.h"
 #include "mapmark.h"
+#include "makeitem.h"
 #include "message.h"
 #include "misc.h"
 #include "mon-act.h"
@@ -48,6 +53,7 @@
 #include "mon-tentacle.h"
 #include "mutation.h"
 #include "player-stats.h"
+#include "potion.h"
 #include "random-weight.h"
 #include "religion.h"
 #include "shout.h"
@@ -703,6 +709,8 @@ bolt mons_spell_beam(monster* mons, spell_type spell_cast, int power,
         beam.hit      = 17 + power / 25;
         beam.pierce   = true;
         break;
+
+    case SPELL_EVOKE_LDECK_OF_WAR:           // ditto
 
     case SPELL_THROW_ICICLE:
         beam.name     = "shard of ice";
@@ -1579,6 +1587,7 @@ bool setup_mons_cast(monster* mons, bolt &pbolt, spell_type spell_cast,
     case SPELL_WATERSTRIKE:
     case SPELL_FLAY:
     case SPELL_CHANT_FIRE_STORM:
+    case SPELL_EVOKE_LDECK_OF_WAR:
     case SPELL_CHANT_WORD_OF_ENTROPY:
         pbolt.range = 0;
         pbolt.glyph = 0;
@@ -6240,6 +6249,10 @@ void mons_cast(monster* mons, bolt pbolt, spell_type spell_cast,
         }
         return;
 
+    case SPELL_EVOKE_LDECK_OF_WAR:
+        sabin_evoke_deck_of_war(50,mons,foe);
+        return;
+
     case SPELL_DEATHS_DOOR:
         if (!mons->has_ench(ENCH_DEATHS_DOOR))
         {
@@ -7786,6 +7799,161 @@ static void _siren_sing(monster* mons, bool avatar)
 
     you.add_beholder(mons);
 }
+///////////////SABIN'S DECKS
+
+void sabin_evoke_deck_of_war(int pow, monster* mons, actor* target)
+{
+    bolt beem;
+int thecard = roll_dice(1,15); // 15 cards only to keep it simple. 10th card is a foreign and harms sabin
+
+
+        if(thecard==1)
+            { // TUKIMA'S DANCE
+            simple_monster_message(mons,(" draws from his legendary deck of war... it is the Blade!"));
+            cast_tukimas_dance(pow, target);
+            }
+        else if(thecard==2)
+            { // THE DANCE BUGGED
+            monster *sabinwep =
+                create_monster(mgen_data(MONS_DANCING_WEAPON, SAME_ATTITUDE(mons), mons, 5, 0, mons->pos(), MHITYOU, MG_AUTOFOE),false);
+            if (sabinwep)
+            {
+              ASSERT(sabinwep->weapon() != nullptr);
+              item_def& wpn(*sabinwep->weapon());
+                    simple_monster_message(mons,(" draws from his legendary deck of war... it is the Dance!"));
+                    wpn.plus = random2(4) + 2;
+                    wpn.sub_type = (coinflip() ? WPN_DEMON_TRIDENT : WPN_EXECUTIONERS_AXE);
+
+                    set_item_ego_type(wpn, OBJ_WEAPONS,
+                              coinflip() ? SPWPN_SPEED : SPWPN_ELECTROCUTION);
+                    item_colour(wpn);
+                    sabinwep->flags |= MF_HARD_RESET;
+
+                      ghost_demon newstats;
+                      newstats.init_dancing_weapon(wpn, pow);
+
+                        sabinwep->set_ghost(newstats);
+                        sabinwep->ghost_demon_init();
+            }
+            else{ simple_monster_message(mons,(" draws from his legendary deck of war... it is the Software Bug!")); }
+
+            }
+        else if(thecard==3)
+            { //PENTAGRAM
+              monster_type dct, dct2;
+
+              simple_monster_message(mons,(" draws from his legendary deck of war... it is the Pentagram!"));
+
+              dct = random_choose(MONS_BALRUG, MONS_BLIZZARD_DEMON,
+              MONS_GREEN_DEATH, MONS_SHADOW_DEMON, MONS_CACODEMON,
+              MONS_HELL_BEAST, MONS_REAPER, MONS_LOROCYPROCA,
+              MONS_HELLION, MONS_SUN_DEMON, MONS_YNOXINUL, MONS_SOUL_EATER);
+              dct2 = random_choose(MONS_SHADOW_FIEND, MONS_BRIMSTONE_FIEND, // No pandemonium lord, instead a fiend. Still highly lethal!
+              MONS_ICE_FIEND, MONS_HELL_SENTINEL, MONS_BALRUG, MONS_BLIZZARD_DEMON,
+              MONS_GREEN_DEATH);
+              create_monster(mgen_data(dct, SAME_ATTITUDE(mons), mons, 3, 0, mons->pos(), MHITYOU, MG_AUTOFOE));
+              create_monster(mgen_data(dct2, SAME_ATTITUDE(mons), mons, 3, 0, mons->pos(), MHITYOU, MG_AUTOFOE));
+            }
+        else if(thecard==4)
+            { // POTION
+             simple_monster_message(mons,(" draws from his legendary deck of war... it is the potion!"));
+              int thepotion = roll_dice(1,4);
+                if(thepotion==1) mons->drink_potion_effect(POT_HASTE, true);
+                    else if(thepotion==2) mons->drink_potion_effect(POT_MIGHT, true);
+                    else if(thepotion==3) mons->drink_potion_effect(POT_RESISTANCE, true);
+                else mons->drink_potion_effect(POT_HEAL_WOUNDS, true);
+            }
+        else if(thecard==5)
+        {// HAMMER
+              simple_monster_message(mons,(" draws from his legendary deck of war... it is the Hammer!"));
+              mons_cast(mons, beem, SPELL_LEHUDIBS_CRYSTAL_SPEAR, MON_SPELL_NATURAL, true);
+        }
+        else if(thecard==6)
+        {// TORMENT
+              simple_monster_message(mons,(" draws from his legendary deck of war... it is the Pain!"));
+              torment(mons, TORMENT_CARDS, mons->pos());
+        }
+        else if(thecard==7)
+        {// ORB OF DESTRUCTION
+              simple_monster_message(mons,(" draws from his legendary deck of war... it is the Orb!"));
+              mons_cast(mons, beem, SPELL_IOOD, MON_SPELL_NATURAL, true);
+        }
+        else if(thecard==8)
+        {// CLOUD
+             simple_monster_message(mons,(" draws from his legendary deck of war... it is the Cloud!"));
+             mons_cast(mons, beem, SPELL_MIASMA_BREATH, MON_SPELL_NATURAL, true);
+        }
+        else if(thecard==9)
+        {// OH BOY, STORM
+             simple_monster_message(mons,(" draws from his legendary deck of war... it is the Storm!"));
+             mons_cast(mons, beem, SPELL_TORNADO, MON_SPELL_NATURAL, true);
+        }
+        else if(thecard==10)
+        {//elixir
+             simple_monster_message(mons,(" draws from his legendary deck of war... it is the Elixir!"));
+             mons->add_ench(mon_enchant(ENCH_REGENERATION, 0, mons, 100));
+        }
+        else if(thecard==11)
+        {//spark
+             simple_monster_message(mons,(" draws from his legendary deck of war... it is the Spark!"));
+             mons_cast(mons, beem, SPELL_ORB_OF_ELECTRICITY, MON_SPELL_NATURAL, true);
+        }
+        else if(thecard==12)
+        {//degeneration
+             simple_monster_message(mons,(" draws from his legendary deck of war... it is the Degeneration"));
+             if(coinflip()){mons_cast(mons, beem, SPELL_MALMUTATE, MON_SPELL_NATURAL, true);}
+                else{ mons_cast(mons,beem,SPELL_POLYMORPH, MON_SPELL_NATURAL, true); }
+        }
+        else if(thecard==13)
+        {
+              simple_monster_message(mons,(" draws from his legendary deck of war... it is the Shadow"));
+              mons->add_ench(mon_enchant(ENCH_INVIS, 0, mons, 100));
+        }
+        else if(thecard==14)
+        {
+              simple_monster_message(mons,(" draws from his legendary deck of war... it is the Illusion"));
+                monster* shadowclone = get_free_monster();
+                if (!shadowclone || monster_at(mons->pos())) return;
+                  shadowclone->type = MONS_SABIN;
+                  shadowclone->behaviour = BEH_SEEK;
+                  shadowclone->attitude = ATT_HOSTILE;
+                  shadowclone->set_position(mons->pos());
+                  shadowclone->mid = MID_NOBODY;
+                  mgrd(mons->pos()) = shadowclone->mindex();
+
+                    mons_summon_illusion_from(shadowclone, mons, SPELL_NO_SPELL, 1);
+                    shadowclone->reset();
+        }
+        if(thecard==15)
+            {
+             simple_monster_message(mons,(" draws a card and is stunned - that card wasn't supposed to be there!"));
+             _sabin_foreign_card(mons);
+        }
+
+
+}
+
+
+void _sabin_foreign_card(monster* mons){
+
+    bolt sabinbeam;
+    int misfortuneroll = roll_dice(1,7);
+        if(misfortuneroll==1){ simple_monster_message(mons,(" looks nervous.")); xom_acts(true, 100);}  // harmful to Sabin
+        else if(misfortuneroll==2){ simple_monster_message(mons,(" recognizes the card and screams!"));  mons->banish(&you); }
+        else if(misfortuneroll==3){ simple_monster_message(mons,(" looks rounder. It was the Feast!"));  mons->add_ench(mon_enchant(ENCH_SLOW, 0, mons, 30)); }
+        else if(misfortuneroll==4){ mons_cast(mons,sabinbeam,SPELL_TOMB_OF_DOROKLOHE,MON_SPELL_NATURAL);}
+        else if(misfortuneroll==5){
+                mons->drain_exp(mons,true,15);
+                simple_monster_message(mons,(" looks much weaker. It was the Wraith!"));
+                                   }
+        else if(misfortuneroll==6){ simple_monster_message(mons,(" is washed by mutagenic energies!")); mons->malmutate("Helix Card");}
+        else{ // the 7
+            if(coinflip()) simple_monster_message(mons,(" summons a genie and acquires a new deck of cards!"));
+            else simple_monster_message(mons,(" looks ill. Must have gotten wrong end of the bargain."));
+            }
+
+}
+
 
 // Checks to see if a particular spell is worth casting in the first place.
 static bool _ms_waste_of_time(monster* mon, mon_spell_slot slot)
@@ -8382,6 +8550,7 @@ static bool _ms_waste_of_time(monster* mon, mon_spell_slot slot)
         return true;
 
     case SPELL_CHANT_FIRE_STORM:
+    case SPELL_EVOKE_LDECK_OF_WAR:
     case SPELL_CHANT_WORD_OF_ENTROPY:
         return mon->has_ench(ENCH_BREATH_WEAPON) || !foe;
 

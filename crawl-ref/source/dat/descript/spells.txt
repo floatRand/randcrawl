@@ -1,4 +1,4 @@
-%%%%
+﻿%%%%
 Abjuration spell
 
 This spell attempts to send the targeted hostile summoned creature to the place
@@ -1626,4 +1626,14 @@ Word of Recall spell
 
 This spell recalls allies from elsewhere on the same dungeon level to the
 caster, after a short delay.
+%%%%
+Bolt of Distortion spell
+
+This spell fires a bolt of distortive energy, inflicting cruel translocational
+mishaps on the victim, unless they are affected by stasis or cannot teleport.
+%%%%
+Evoke Legendary Deck of War spell
+
+By pulling a card from legendary deck of war, the holder can direct powerful
+destructive forces at his foes. However, not all cards are safe for the user.
 %%%%

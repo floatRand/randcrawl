@@ -39,6 +39,9 @@ bool setup_mons_cast(monster* mons, bolt &pbolt, spell_type spell_cast,
 
 void mons_cast_haunt(monster* mons);
 bool mons_word_of_recall(monster* mons, int recall_target);
+
+void sabin_evoke_deck_of_war(int pow, monster* mons, actor* target);
+void _sabin_foreign_card(monster* mons);
 void finish_chanting_fire_storm(monster* mons, coord_def foe_pos);
 void finish_chanting_word_of_entropy(monster* mons, actor *mons_foe);
 void mons_cast_spectral_orcs(monster* mons);

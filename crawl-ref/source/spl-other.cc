@@ -483,3 +483,4 @@ spret_type cast_darkness(int pow, bool fail)
 
     return SPRET_SUCCESS;
 }
+

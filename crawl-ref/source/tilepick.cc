@@ -2148,6 +2148,8 @@ tileidx_t tileidx_monster_base(int type, bool in_water, int colour, int number,
     // kobolds ('K')
     case MONS_SONJA:
         return TILEP_MONS_SONJA;
+    case MONS_SABIN:
+        return TILEP_MONS_SABIN;
     case MONS_PIKEL:
         return TILEP_MONS_PIKEL;
 

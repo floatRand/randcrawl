@@ -796,6 +796,14 @@ static const mon_spellbook mspell_list[] =
       }
     },
 
+    {  MST_SABIN,
+      {
+       { SPELL_EVOKE_LDECK_OF_WAR, 30, MON_SPELL_NATURAL },
+       { SPELL_BLINK_RANGE, 22, MON_SPELL_WIZARD },
+       { SPELL_BLINK_AWAY, 22, MON_SPELL_WIZARD | MON_SPELL_EMERGENCY},
+      }
+    },
+
     { MST_MENKAURE,
       {
        { SPELL_PAIN, 18, MON_SPELL_WIZARD },

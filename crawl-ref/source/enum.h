@@ -3141,6 +3141,7 @@ enum monster_type                      // menv[].type
     MONS_TIAMAT,
     MONS_ROXANNE,
     MONS_SONJA,
+    MONS_SABIN,
     MONS_EUSTACHIO,
     MONS_GRATON,
     MONS_AZRAEL,
@@ -4456,6 +4457,7 @@ enum spell_type
     SPELL_GRAVITAS,
     SPELL_CHANT_FIRE_STORM,
     SPELL_CHANT_WORD_OF_ENTROPY,
+    SPELL_EVOKE_LDECK_OF_WAR,
     SPELL_BOLT_OF_DISTORTION,
     NUM_SPELLS
 };

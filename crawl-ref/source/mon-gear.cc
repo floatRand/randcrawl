@@ -1130,6 +1130,17 @@ static void _give_weapon(monster* mon, int level, bool melee_only = false,
                                                  1, SPWPN_DRAINING,
                                                  0));
         break;
+    case MONS_SABIN:
+        force_item = true;
+        force_uncursed = true;
+        item.base_type = OBJ_WEAPONS;
+        item.sub_type  = coinflip() ? WPN_RAPIER : WPN_QUICK_BLADE;
+        set_item_ego_type(item, OBJ_WEAPONS,
+                          random_choose_weighted(2, SPWPN_CHAOS,
+                                                 2, SPWPN_ELECTROCUTION,
+                                                 2, SPWPN_FREEZING,
+                                                 0));
+        break;
 
     case MONS_MAURICE:
         item.base_type = OBJ_WEAPONS;

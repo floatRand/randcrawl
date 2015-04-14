@@ -720,6 +720,7 @@ death_ooze MONS_DEATH_OOZE
 ## Kobolds ('K')
 %sdir mon/unique
 sonja MONS_SONJA
+sabin MONS_SABIN
 pikel MONS_PIKEL
 %sdir mon
 kobold MONS_KOBOLD

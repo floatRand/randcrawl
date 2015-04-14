@@ -6073,6 +6073,51 @@ w:1
 @The_monster@ says @to_foe@, "Someone hired me to kill you, but I'm not supposed to say who."
 ## END Sonja ##
 %%%%
+############ SABIN ### favoured of Nemelex
+Sabin
+
+@_Sabin_common_@
+
+w:5
+@_Sabin_rare_@
+%%%%
+_Sabin_common_
+
+@The_monster@ says @to_foe@, "Up for some card-games?"
+
+@The_monster@ says @at_foe@, "It's all in the cards, you know!"
+
+@The_monster@ says @at_foe@, "Let's duel!"
+
+VISUAL:@The_monster@ pulls a new deck from his jacket.
+
+VISUAL:@The_monster@ shuffles @possessive@ cards. How spectacular!
+
+VISUAL:@The_monster@ pockets a deck.
+%%%%
+_Sabin_rare_
+
+@The_monster@ shouts @at_foe@, "You have no chances of harming the favoured of Nemelex Xobeh!"
+
+@The_monster@ shouts @at_foe@, "You have activated my trap card!"
+
+w:1
+@The_monster@ says @to_foe@, "You have chances, my luck is UNBEATABLE!"
+
+@The_monster@ says @to_foe@, "Only way I could lose is drawing punishing card!"
+
+@The_monster@ shouts @at_foe@, "My next card will end this!"
+
+@The_monster@ shouts @to_foe@, "I remember the order of every card in my deck!"
+%%%%
+Sabin killed
+
+__NONE
+
+VISUAL:@The_monster@'s body disappears with a rainbow glow of colours.
+
+## END Sabin ##
+%%%%
 ############ TERENCE ### A fighter who likes to kill
 Terence
 

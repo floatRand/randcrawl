@@ -6228,6 +6228,19 @@ DUMMY(MONS_GOLEM, '8', LIGHTGREY, "golem")
 },
 
 {
+    MONS_SABIN, 'K', LIGHTGREEN, "Sabin",
+    M_UNIQUE | M_SEE_INVIS | M_WARM_BLOOD | M_SPEAKS | M_SPEAKS | M_MALE,
+    MR_RES_POISON,
+    400, 40, MONS_KOBOLD, MONS_KOBOLD, MH_NATURAL, 150,
+    { {AT_HIT, AF_PLAIN, 22}, AT_NO_ATK, AT_NO_ATK,
+       AT_NO_ATK },
+    { 15, 0, 0, 122 },
+    4, 30, MST_SABIN, CE_NOCORPSE, S_SHOUT,
+    I_NORMAL, HT_LAND, FL_NONE, 10, DEFAULT_ENERGY,
+    MONUSE_WEAPONS_ARMOUR, MONEAT_NOTHING, SIZE_SMALL, MON_SHAPE_HUMANOID
+},
+
+{
     // XP modifier is very high to compensate for 4 created-friendly humans
     MONS_PIKEL, 'K', BLUE, "Pikel",
     M_WARM_BLOOD | M_SPEAKS | M_UNIQUE | M_MALE,

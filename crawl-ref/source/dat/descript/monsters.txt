@@ -456,6 +456,12 @@ Sonja
 A graceful kobold assassin. Admire her graceful pirouettes, thrill at her
 daring leaps! But watch out for her knives!
 %%%%
+Sabin
+
+A devout follower of Nemelex Xobeh, this lucky kobold has gotten this deep in
+the dungeon with his powerful decks. However, his luck is not as infallible as
+he would like to think!
+%%%%
 Terence
 
 A violent murderer who kills for both pleasure and profit, Terence has been

@@ -313,6 +313,24 @@ NAME:   uniq_mara
 DEPTH:  Depths:1-4, Elf:$, Swamp:3-, Snake:3-, Shoals:3-, Spider:3-, Vaults:2-, Crypt, Tomb
 : place_unique(_G, "Mara")
 
+
+NAME:   uniq_sabin
+DEPTH:  Depths:2-, Vaults:2-, Elf:$, Zot:1, Crypt
+: place_unique(_G, "Sabin")
+
+#Sabin is scumming Pan for decks and piety
+NAME:   uniq_sabin_pan
+DEPTH:  Pan
+CHANCE: 5%
+TAGS:   transparent extra allow_dup luniq_sabin
+veto {{
+  return you.uniques("Sabin")
+}}
+MONS: generate_awake Sabin
+MAP
+1
+ENDMAP
+
 NAME:   uniq_mennas
 DEPTH:  Depths:3-, Vaults:2-, Crypt, Tomb
 : place_unique(_G, "Mennas")
