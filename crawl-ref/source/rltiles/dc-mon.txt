@@ -974,6 +974,7 @@ ghoul MONS_GHOUL
 
 %sdir mon/unique
 blork_the_orc MONS_BLORK_THE_ORC
+graton MONS_GRATON
 %rim 0
 urug MONS_URUG
 nergalle MONS_NERGALLE

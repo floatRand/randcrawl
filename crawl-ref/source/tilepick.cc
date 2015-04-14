@@ -2196,6 +2196,9 @@ tileidx_t tileidx_monster_base(int type, bool in_water, int colour, int number,
     // statue ('8')
     case MONS_ROXANNE:
         return TILEP_MONS_ROXANNE;
+    // ghoul ('n')
+    case MONS_GRATON:
+        return TILEP_MONS_GRATON;
 
     // -------------------------------------
     // non-human uniques ('@')

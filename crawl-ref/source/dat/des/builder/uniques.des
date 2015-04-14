@@ -126,6 +126,10 @@ NAME:   uniq_eustachio
 DEPTH:  D:4-6
 : place_unique(_G, "Eustachio")
 
+NAME:   uniq_graton
+DEPTH:  D:9-12, Lair:2-5, Swamp:1
+: place_unique(_G, "Graton")
+
 NAME:   uniq_frances
 DEPTH:  D:12-14, Elf:1, Swamp:1-2, Snake:1-2, Shoals:1-2, Spider:1-2
 : place_unique(_G, "Frances")

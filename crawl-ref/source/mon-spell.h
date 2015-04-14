@@ -812,6 +812,15 @@ static const mon_spellbook mspell_list[] =
       }
     },
 
+    { MST_GRATON,
+      {
+       { SPELL_MIGHT, 16, MON_SPELL_WIZARD },
+       { SPELL_LRD, 22, MON_SPELL_WIZARD },
+       { SPELL_STONE_ARROW, 22, MON_SPELL_WIZARD },
+       { SPELL_SLOW, 16, MON_SPELL_WIZARD },
+      }
+    },
+
     { MST_ILSUIW,
       {
        { SPELL_THROW_ICICLE, 11, MON_SPELL_WIZARD },

@@ -163,6 +163,11 @@ Eustachio
 An apprentice summoner with a flowing moustache. He has funny ideas about
 honour.
 %%%%
+Graton
+
+A particularly intelligent ghoul, formerly a powerful earth elementalist. 
+His intense rotting has driven him desperate.
+%%%%
 Fannar
 
 A cold-hearted elven sorcerer, draped in robes of high office. He whispers

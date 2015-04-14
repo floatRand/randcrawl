@@ -3916,6 +3916,43 @@ SPELL:@The_monster@ calls on the powers of shadow!
 @The_monster@ brags, "I can call spirits from the vasty deep."
 ## END Eustachio ##
 %%%%
+############ GRATON ### feeble ghoul earth elementalist, once powerful, but now rotten to the bone.
+Graton
+
+@_Graton_common_@
+
+w:5
+@_Graton_rare_@
+%%%%
+_Graton_common_
+
+@The_monster@ wails @at_foe@, "I am so hungry, so hungry, so sorry!"
+
+@The_monster@ pleads @at_foe@, "Please let me eat you, I don't want to rot to nothing!"
+
+@The_monster@ pleads @to_foe@, "Please, just a little bit!"
+
+@The_monster@ apologizes @to_foe@, "Sorry, but it's you or me."
+
+VISUAL:@The_monster@ flips a page on his book.
+
+@The_monster@ apologizes, "Sorry!"
+
+@The_monster@ asks, "Can't you spare me an arm?"
+
+@The_monster@ wails, "It is horrible!"
+%%%%
+_Graton_rare_
+
+@The_monster@ yells @at_foe@, "My flesh might be rotten, but my mind is still fresh!"
+
+VISUAL:@The_monster@ twiddles @possessive@ claws.
+
+SPELL:@The_monster@ channels power of earth!
+
+@The_monster@ apologizes profusely.
+## END Graton ##
+%%%%
 ############ FRANCES ### A warrior who bested a Pandemonium Lord
 Frances
 
