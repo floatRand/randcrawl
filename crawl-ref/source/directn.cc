@@ -3254,6 +3254,9 @@ static vector<string> _get_monster_desc_vector(const monster_info& mi)
     if (mi.is(MB_UMBRAED))
         descs.emplace_back("umbra");
 
+   if (mi.is(MB_UNHOLIED))
+        descs.emplace_back("unholied");
+
     if (mi.is(MB_POSSESSABLE))
         descs.emplace_back("possessable"); // FIXME: better adjective
     else if (mi.is(MB_ENSLAVED))
@@ -3327,6 +3330,9 @@ static string _get_monster_desc(const monster_info& mi)
 
     if (mi.is(MB_UMBRAED))
         text += pronoun + " is wreathed by an umbra.\n";
+
+    if (mi.is(MB_UNHOLIED))
+        text += pronoun + " is wreathed by an unholy aura.\n";
 
     if (mi.intel() <= I_INSECT)
         text += pronoun + " is mindless.\n";
@@ -3562,6 +3568,8 @@ static bool _print_cloud_desc(const coord_def where)
         areas.emplace_back("is lit by a halo");
     if (umbraed(where) && !haloed(where))
         areas.emplace_back("is wreathed by an umbra");
+    if (unholy_haloed(where))
+        areas.emplace_back("is wreathed by unholy aura");
     if (liquefied(where))
         areas.emplace_back("is liquefied");
     if (orb_haloed(where) || quad_haloed(where))

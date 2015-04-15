@@ -69,7 +69,6 @@
 #include "uncancel.h"
 #include "view.h"
 #include "xom.h"
-
 // For information on deck structure, reference the comment near the beginning
 
 #define STACKED_KEY "stacked"

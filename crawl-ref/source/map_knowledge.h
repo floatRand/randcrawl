@@ -51,6 +51,7 @@ struct cloud_info
 #define MAP_LIQUEFIED       0x400000
 #define MAP_ORB_HALOED      0x800000
 #define MAP_UMBRAED        0x1000000
+#define MAP_UNHOLIED       0x10000000 // using hot for now!
 #define MAP_QUAD_HALOED    0X4000000
 #define MAP_DISJUNCT       0X8000000
 #if TAG_MAJOR_VERSION == 34

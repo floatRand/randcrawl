@@ -356,10 +356,13 @@ public:
     //            purpose)
     virtual bool backlit(bool self_halo = true) const = 0;
     virtual bool umbra() const = 0;
+    virtual bool unholyaura() const = 0;
     // Within any actor's halo?
     virtual bool haloed() const;
     // Within an umbra?
     virtual bool umbraed() const;
+    // wreathed by unholy aura?
+    virtual bool unholied() const;
 #if TAG_MAJOR_VERSION == 34
     // Being heated by a heat aura?
     virtual bool heated() const;
@@ -371,6 +374,7 @@ public:
     // Squared liquefying radius
     virtual int liquefying_radius2() const = 0;
     virtual int umbra_radius2() const = 0;
+    virtual int unholy_radius2() const = 0;
 #if TAG_MAJOR_VERSION == 34
     virtual int heat_radius2() const = 0;
 #endif

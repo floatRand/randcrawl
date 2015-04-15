@@ -837,6 +837,13 @@ curse toe
 A disembodied toe, hanging in the air and radiating an intense field of
 negative energy.
 %%%%
+death's hand
+
+A gaunt figure cloaked in darkness, carriers of the black torch.
+They are gentle caretakers of the undead, but lash out at anything
+living or anything that could be threat to their undead. They are shrouded
+by an aura that heals their nearby allies at rapid rate.
+%%%%
 cyclops
 
 A giant with one eye in the centre of its forehead. Despite their lack of

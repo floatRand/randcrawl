@@ -3153,12 +3153,17 @@ bool monster::backlit(bool self_halo) const
         return true;
     }
 
-    return !umbraed() && haloed() && (self_halo || halo_radius2() == -1);
+    return ( !umbraed() ) && haloed() && (self_halo || halo_radius2() == -1);
 }
 
 bool monster::umbra() const
 {
     return umbraed() && !haloed();
+}
+
+bool monster::unholyaura() const
+{
+    return unholied();
 }
 
 bool monster::glows_naturally() const

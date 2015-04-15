@@ -126,6 +126,10 @@ static unsigned short _cell_feat_show_colour(const map_cell& cell,
             else
                 colour = MAGENTA; // If no holy or silence
         }
+        else if (cell.flags & MAP_UNHOLIED){
+                if (cell.flags & MAP_SILENCED) colour = DARKGRAY;
+                else colour = BLACK;
+        }
         else if (cell.flags & MAP_SILENCED)
             colour = CYAN; // Silence but no holy/unholy
         else if (cell.flags & MAP_ORB_HALOED)

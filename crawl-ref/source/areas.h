@@ -12,6 +12,7 @@ enum area_centre_type
     AREA_UMBRA,
     AREA_QUAD,
     AREA_DISJUNCTION,
+    AREA_UNHOLY,
 #if TAG_MAJOR_VERSION == 34
     AREA_HOT,
 #endif
@@ -47,6 +48,8 @@ bool disjunction_haloed(const coord_def& p);
 
 // ...or endarkened by an umbra?
 bool umbraed(const coord_def& p);
+
+bool unholy_haloed(const coord_def& p);
 
 #if TAG_MAJOR_VERSION == 34
 // ...or is the area hot?

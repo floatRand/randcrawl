@@ -233,6 +233,14 @@ bool fill_status_info(int status, status_info* inf)
         }
         break;
 
+    case STATUS_UNHOLIED:
+        if (you.umbra())
+        {
+            inf->short_text   = "wreathed by unholy field of energy";
+            inf->long_text    = "You are wreathed by an unholy field of energy.";
+        }
+    break;
+
     case STATUS_NET:
         if (you.attribute[ATTR_HELD])
         {

@@ -3057,6 +3057,7 @@ enum monster_type                      // menv[].type
     MONS_DEATH_COB,
     MONS_CURSE_TOE,
     MONS_CURSE_SKULL,
+    MONS_DEATHS_HAND,
     MONS_PROFANE_SERVITOR,
 #if TAG_MAJOR_VERSION > 34
     MONS_ANCIENT_CHAMPION,

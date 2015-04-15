@@ -136,7 +136,7 @@ static void _monster_regenerate(monster* mons)
         return;
 
     if (mons->has_ench(ENCH_SICK) || mons->has_ench(ENCH_DEATHS_DOOR) ||
-        (!mons_can_regenerate(mons) && !(mons->has_ench(ENCH_REGENERATION))))
+        (!mons_can_regenerate(mons) && !(mons->has_ench(ENCH_REGENERATION) && !( mons->holiness()==MH_UNDEAD && mons->unholied() ))))
     {
         return;
     }
@@ -150,6 +150,7 @@ static void _monster_regenerate(monster* mons)
 
     if (mons_class_fast_regen(mons->type)
         || mons->has_ench(ENCH_REGENERATION)
+        || ( mons->unholied() && mons->holiness()==MH_UNDEAD )
         || mons->has_ench(ENCH_WITHDRAWN)
         || _mons_natural_regen_roll(mons))
     {

@@ -8,6 +8,7 @@ enum halo_type
     HALO_RANGE = 1,
     HALO_MONSTER = 2,
     HALO_UMBRA = 3,
+    HALO_UNHOLY = 4,
 };
 
 struct packed_cell
@@ -37,6 +38,7 @@ struct packed_cell
     uint8_t travel_trail;
     bool quad_glow;
     uint8_t disjunct;
+    bool unholied;
 #if TAG_MAJOR_VERSION == 34
     uint8_t heat_aura;
 #endif
@@ -49,7 +51,7 @@ struct packed_cell
                     glowing_mold(false), is_sanctuary(false), is_liquefied(false),
                     mangrove_water(false), orb_glow(0), blood_rotation(0),
                     old_blood(false), travel_trail(0), quad_glow(false),
-                    disjunct(false)
+                    disjunct(false), unholied(false)
 #if TAG_MAJOR_VERSION == 34
                     , heat_aura(false)
 #endif
@@ -71,7 +73,8 @@ struct packed_cell
                                         old_blood(c->old_blood),
                                         travel_trail(c->travel_trail),
                                         quad_glow(c->quad_glow),
-                                        disjunct(c->disjunct)
+                                        disjunct(c->disjunct),
+                                        unholied(c->unholied)
 #if TAG_MAJOR_VERSION == 34
                                         , heat_aura(c->heat_aura)
 #endif

@@ -1348,7 +1348,7 @@ static monster_type _yred_servants[] =
     MONS_MUMMY, MONS_WIGHT, MONS_FLYING_SKULL, MONS_WRAITH,
     MONS_VAMPIRE, MONS_PHANTASMAL_WARRIOR, MONS_SKELETAL_WARRIOR,
     MONS_FLAYED_GHOST, MONS_DEATH_COB, MONS_GHOUL, MONS_BONE_DRAGON,
-    MONS_PROFANE_SERVITOR
+    MONS_PROFANE_SERVITOR, MONS_DEATHS_HAND
 };
 
 #define MIN_YRED_SERVANT_THRESHOLD 3
@@ -1357,7 +1357,8 @@ static monster_type _yred_servants[] =
 static bool _yred_high_level_servant(monster_type type)
 {
     return type == MONS_BONE_DRAGON
-           || type == MONS_PROFANE_SERVITOR;
+           || type == MONS_PROFANE_SERVITOR
+             || type == MONS_DEATHS_HAND;
 }
 
 int yred_random_servants(unsigned int threshold, bool force_hostile)

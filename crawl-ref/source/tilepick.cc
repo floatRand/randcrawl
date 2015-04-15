@@ -1460,7 +1460,8 @@ tileidx_t tileidx_monster_base(int type, bool in_water, int colour, int number,
         return TILEP_MONS_CURSE_SKULL;
     case MONS_CURSE_TOE:
         return TILEP_MONS_CURSE_TOE;
-
+    case MONS_DEATHS_HAND:
+        return TILEP_MONS_DEATHS_HAND;
     // angelic beings ('A')
     case MONS_ANGEL:
         return TILEP_MONS_ANGEL;

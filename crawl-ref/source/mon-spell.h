@@ -540,6 +540,16 @@ static const mon_spellbook mspell_list[] =
       }
     },
 
+    {  MST_DEATHS_HAND,
+      {
+       { SPELL_MALIGN_OFFERING, 20, MON_SPELL_MAGICAL },
+       { SPELL_DISPEL_UNDEAD, 20, MON_SPELL_MAGICAL },
+       { SPELL_MIGHT_OTHER, 20, MON_SPELL_MAGICAL  },
+       { SPELL_CALL_LOST_SOUL, 8, MON_SPELL_MAGICAL  },
+       { SPELL_BLINK_ALLIES_ENCIRCLE, 20, MON_SPELL_MAGICAL },
+      }
+    },
+
     {  MST_SHINING_EYE,
       {
        { SPELL_MALMUTATE, 57, MON_SPELL_MAGICAL },

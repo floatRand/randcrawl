@@ -726,9 +726,11 @@ public:
     bool caught() const;
     bool backlit(bool self_halo = true) const;
     bool umbra() const;
+    bool unholyaura() const;
     int halo_radius2() const;
     int silence_radius2() const;
     int liquefying_radius2() const;
+    int unholy_radius2() const;
     int umbra_radius2() const;
 #if TAG_MAJOR_VERSION == 34
     int heat_radius2() const;

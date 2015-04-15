@@ -3995,6 +3995,7 @@ static bool _mons_will_abjure(monster* mons, spell_type spell)
     {
         return true;
     }
+    else if(mons->has_spell(SPELL_ABJURATION)) return true;
 
     return false;
 }

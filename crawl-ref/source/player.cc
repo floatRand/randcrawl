@@ -1113,6 +1113,11 @@ static int _player_bonus_regen()
         rr += 100;
     }
 
+    if(you.unholied() && you.undead_state()
+       && !(you.duration[DUR_REGENERATION] || you.duration[DUR_TROGS_HAND])){
+        rr += 100;
+    }
+
     // Jewellery.
     rr += REGEN_PIP * you.wearing(EQ_AMULET, AMU_REGENERATION);
 
@@ -7290,6 +7295,12 @@ bool player::umbra() const
 {
     return !backlit() && umbraed() && !haloed();
 }
+
+bool player::unholyaura() const
+{
+    return unholied();
+}
+
 
 bool player::glows_naturally() const
 {

@@ -1030,6 +1030,7 @@ ancient_champion MONS_ANCIENT_CHAMPION
 curse_skull MONS_CURSE_SKULL
 %rim 0
 curse_toe MONS_CURSE_TOE
+deaths_hand MONS_DEATHS_HAND
 %rim 1
 flying_skull MONS_FLYING_SKULL
 crawling_corpse MONS_CRAWLING_CORPSE

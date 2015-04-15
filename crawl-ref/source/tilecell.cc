@@ -31,6 +31,7 @@ void packed_cell::clear()
     glowing_mold     = false;
     is_sanctuary     = false;
     is_liquefied     = false;
+    unholied         = false;
     mangrove_water = false;
     orb_glow         = 0;
     blood_rotation   = 0;
@@ -63,6 +64,7 @@ bool packed_cell::operator ==(const packed_cell &other) const
     if (travel_trail != other.travel_trail) return false;
     if (quad_glow != other.quad_glow) return false;
     if (disjunct != other.disjunct) return false;
+    if (unholied != other.unholied) return false;
 #if TAG_MAJOR_VERSION == 34
     if (heat_aura != other.heat_aura) return false;
 #endif

@@ -42,6 +42,7 @@ enum areaprop_flag
 #if TAG_MAJOR_VERSION == 34
     APROP_HOT           = (1 << 11),
 #endif
+    APROP_UNHOLY        = (1 << 12),
 };
 
 struct area_centre
@@ -84,6 +85,7 @@ void areas_actor_moved(const actor* act, const coord_def& oldpos)
         (you.entering_level
          || act->halo_radius2() > -1 || act->silence_radius2() > -1
          || act->liquefying_radius2() > -1 || act->umbra_radius2() > -1
+         || act->unholy_radius2() > -1
 #if TAG_MAJOR_VERSION == 34
          || act->heat_radius2() > -1
 #endif
@@ -151,6 +153,15 @@ static void _actor_areas(actor *a)
         no_areas = false;
     }
 #endif
+
+    if ((r = a->unholy_radius2()) >= 0)
+    {
+        _agrid_centres.emplace_back(AREA_UMBRA, a->pos(), r);
+
+        for (radius_iterator ri(a->pos(), r, C_CIRCLE, LOS_DEFAULT); ri; ++ri)
+            _set_agrid_flag(*ri, APROP_UNHOLY);
+        no_areas = false;
+    }
 
     // XXX: make this a proper function
     if (a->type == MONS_SINGULARITY)
@@ -257,7 +268,8 @@ static area_centre_type _get_first_area(const coord_def& f)
     // the second.
     if (a & APROP_LIQUID)
         return AREA_LIQUID;
-
+    if (a & APROP_UNHOLY )
+        return AREA_UNHOLY;
     return AREA_NONE;
 }
 
@@ -769,7 +781,38 @@ int player::heat_radius2() const
 
     return 2; // Surrounds you to radius of 1.
 }
+///////////////////////////////////////
+bool unholy_haloed(const coord_def& p)
+{
+    if (!map_bounds(p))
+        return false;
+    if (!_agrid_valid)
+        _update_agrid();
 
+    return _check_agrid_flag(p, APROP_UNHOLY);
+}
+
+bool actor::unholied() const
+{
+     return ::unholy_haloed(pos());
+}
+/////////////////////////////////////
+int player::unholy_radius2() const
+{
+        //no... not yet
+        return -1;
+}
+////////////////////////////////////
+int monster::unholy_radius2() const
+{
+    switch (type)
+    {
+    case MONS_DEATHS_HAND:
+        return 40; // Very unholy!
+    default:
+        return -1;
+    }
+}
 // Stub for monster radius
 int monster::heat_radius2() const
 {
