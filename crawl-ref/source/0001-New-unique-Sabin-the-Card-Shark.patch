@@ -1,0 +1,598 @@
+From bcef80c154719f340ca533b9f21f75a9139bcbb4 Mon Sep 17 00:00:00 2001
+From: SAS <->
+Date: Tue, 14 Apr 2015 23:35:30 +0300
+Subject: [PATCH] New unique: Sabin the Card Shark
+
+---
+ crawl-ref/source/dat/database/monspeak.txt    |  45 +++++++
+ crawl-ref/source/dat/database/montitle.txt    |   4 +
+ crawl-ref/source/dat/des/builder/uniques.des  |  18 +++
+ crawl-ref/source/dat/descript/monsters.txt    |   6 +
+ crawl-ref/source/dat/descript/spells.txt      |  12 +-
+ crawl-ref/source/enum.h                       |   2 +
+ crawl-ref/source/mon-cast.cc                  | 169 ++++++++++++++++++++++++++
+ crawl-ref/source/mon-cast.h                   |   3 +
+ crawl-ref/source/mon-data.h                   |  13 ++
+ crawl-ref/source/mon-gear.cc                  |  11 ++
+ crawl-ref/source/mon-spell.h                  |   8 ++
+ crawl-ref/source/rltiles/dc-mon.txt           |   1 +
+ crawl-ref/source/rltiles/mon/unique/sabin.png | Bin 0 -> 1624 bytes
+ crawl-ref/source/spl-data.h                   |  11 ++
+ crawl-ref/source/spl-other.cc                 |   1 +
+ crawl-ref/source/tilepick.cc                  |   2 +
+ 16 files changed, 305 insertions(+), 1 deletion(-)
+ create mode 100644 crawl-ref/source/rltiles/mon/unique/sabin.png
+
+diff --git a/crawl-ref/source/dat/database/monspeak.txt b/crawl-ref/source/dat/database/monspeak.txt
+index 6d193f8..ae2c34c 100644
+--- a/crawl-ref/source/dat/database/monspeak.txt
++++ b/crawl-ref/source/dat/database/monspeak.txt
+@@ -6073,6 +6073,51 @@ w:1
+ @The_monster@ says @to_foe@, "Someone hired me to kill you, but I'm not supposed to say who."
+ ## END Sonja ##
+ %%%%
++############ SABIN ### favoured of Nemelex
++Sabin
++
++@_Sabin_common_@
++
++w:5
++@_Sabin_rare_@
++%%%%
++_Sabin_common_
++
++@The_monster@ says @to_foe@, "Up for some card-games?"
++
++@The_monster@ says @at_foe@, "It's all in the cards, you know!"
++
++@The_monster@ says @at_foe@, "Let's duel!"
++
++VISUAL:@The_monster@ pulls a new deck from his jacket.
++
++VISUAL:@The_monster@ shuffles @possessive@ cards. How spectacular!
++
++VISUAL:@The_monster@ pockets a deck.
++%%%%
++_Sabin_rare_
++
++@The_monster@ shouts @at_foe@, "You have no chances of harming the favoured of Nemelex Xobeh!"
++
++@The_monster@ shouts @at_foe@, "You have activated my trap card!"
++
++w:1
++@The_monster@ says @to_foe@, "You have chances, my luck is UNBEATABLE!"
++
++@The_monster@ says @to_foe@, "Only way I could lose is drawing punishing card!"
++
++@The_monster@ shouts @at_foe@, "My next card will end this!"
++
++@The_monster@ shouts @to_foe@, "I remember the order of every card in my deck!"
++%%%%
++Sabin killed
++
++__NONE
++
++VISUAL:@The_monster@'s body disappears with a rainbow glow of colours.
++
++## END Sabin ##
++%%%%
+ ############ TERENCE ### A fighter who likes to kill
+ Terence
+ 
+diff --git a/crawl-ref/source/dat/database/montitle.txt b/crawl-ref/source/dat/database/montitle.txt
+index 79db491..0f22e1a 100644
+--- a/crawl-ref/source/dat/database/montitle.txt
++++ b/crawl-ref/source/dat/database/montitle.txt
+@@ -271,6 +271,10 @@ Sonja title
+ 
+ Sonja, the Graceful Assassin
+ %%%%
++Sabin title
++
++Sabin, the Card Shark
++%%%%
+ Terence title
+ 
+ Terence the Incautious
+diff --git a/crawl-ref/source/dat/des/builder/uniques.des b/crawl-ref/source/dat/des/builder/uniques.des
+index 759a823..832b0f6 100644
+--- a/crawl-ref/source/dat/des/builder/uniques.des
++++ b/crawl-ref/source/dat/des/builder/uniques.des
+@@ -313,6 +313,24 @@ NAME:   uniq_mara
+ DEPTH:  Depths:1-4, Elf:$, Swamp:3-, Snake:3-, Shoals:3-, Spider:3-, Vaults:2-, Crypt, Tomb
+ : place_unique(_G, "Mara")
+ 
++
++NAME:   uniq_sabin
++DEPTH:  Depths:2-, Vaults:2-, Elf:$, Zot:1, Crypt
++: place_unique(_G, "Sabin")
++
++#Sabin is scumming Pan for decks and piety
++NAME:   uniq_sabin_pan
++DEPTH:  Pan
++CHANCE: 5%
++TAGS:   transparent extra allow_dup luniq_sabin
++veto {{
++  return you.uniques("Sabin")
++}}
++MONS: generate_awake Sabin
++MAP
++1
++ENDMAP
++
+ NAME:   uniq_mennas
+ DEPTH:  Depths:3-, Vaults:2-, Crypt, Tomb
+ : place_unique(_G, "Mennas")
+diff --git a/crawl-ref/source/dat/descript/monsters.txt b/crawl-ref/source/dat/descript/monsters.txt
+index 417923c..2757bb8 100644
+--- a/crawl-ref/source/dat/descript/monsters.txt
++++ b/crawl-ref/source/dat/descript/monsters.txt
+@@ -456,6 +456,12 @@ Sonja
+ A graceful kobold assassin. Admire her graceful pirouettes, thrill at her
+ daring leaps! But watch out for her knives!
+ %%%%
++Sabin
++
++A devout follower of Nemelex Xobeh, this lucky kobold has gotten this deep in
++the dungeon with his powerful decks. However, his luck is not as infallible as
++he would like to think!
++%%%%
+ Terence
+ 
+ A violent murderer who kills for both pleasure and profit, Terence has been
+diff --git a/crawl-ref/source/dat/descript/spells.txt b/crawl-ref/source/dat/descript/spells.txt
+index 0bbd224..bede596 100644
+--- a/crawl-ref/source/dat/descript/spells.txt
++++ b/crawl-ref/source/dat/descript/spells.txt
+@@ -1,4 +1,4 @@
+-%%%%
++﻿%%%%
+ Abjuration spell
+ 
+ This spell attempts to send the targeted hostile summoned creature to the place
+@@ -1627,3 +1627,13 @@ Word of Recall spell
+ This spell recalls allies from elsewhere on the same dungeon level to the
+ caster, after a short delay.
+ %%%%
++Bolt of Distortion spell
++
++This spell fires a bolt of distortive energy, inflicting cruel translocational
++mishaps on the victim, unless they are affected by stasis or cannot teleport.
++%%%%
++Evoke Legendary Deck of War spell
++
++By pulling a card from legendary deck of war, the holder can direct powerful
++destructive forces at his foes. However, not all cards are safe for the user.
++%%%%
+diff --git a/crawl-ref/source/enum.h b/crawl-ref/source/enum.h
+index 96c28c0..fa85f69 100644
+--- a/crawl-ref/source/enum.h
++++ b/crawl-ref/source/enum.h
+@@ -3141,6 +3141,7 @@ enum monster_type                      // menv[].type
+     MONS_TIAMAT,
+     MONS_ROXANNE,
+     MONS_SONJA,
++    MONS_SABIN,
+     MONS_EUSTACHIO,
+     MONS_GRATON,
+     MONS_AZRAEL,
+@@ -4456,6 +4457,7 @@ enum spell_type
+     SPELL_GRAVITAS,
+     SPELL_CHANT_FIRE_STORM,
+     SPELL_CHANT_WORD_OF_ENTROPY,
++    SPELL_EVOKE_LDECK_OF_WAR,
+     SPELL_BOLT_OF_DISTORTION,
+     NUM_SPELLS
+ };
+diff --git a/crawl-ref/source/mon-cast.cc b/crawl-ref/source/mon-cast.cc
+index 9cbbf0f..d683ff2 100644
+--- a/crawl-ref/source/mon-cast.cc
++++ b/crawl-ref/source/mon-cast.cc
+@@ -20,6 +20,7 @@
+ #include "coordit.h"
+ #include "database.h"
+ #include "delay.h"
++#include "decks.h"
+ #include "directn.h"
+ #include "english.h"
+ #include "env.h"
+@@ -28,10 +29,14 @@
+ #include "fight.h"
+ #include "fprop.h"
+ #include "godpassive.h"
++#include "ghost.h"
++#include "invent.h"
++#include "itemprop.h"
+ #include "items.h"
+ #include "libutil.h"
+ #include "losglobal.h"
+ #include "mapmark.h"
++#include "makeitem.h"
+ #include "message.h"
+ #include "misc.h"
+ #include "mon-act.h"
+@@ -48,6 +53,7 @@
+ #include "mon-tentacle.h"
+ #include "mutation.h"
+ #include "player-stats.h"
++#include "potion.h"
+ #include "random-weight.h"
+ #include "religion.h"
+ #include "shout.h"
+@@ -704,6 +710,8 @@ bolt mons_spell_beam(monster* mons, spell_type spell_cast, int power,
+         beam.pierce   = true;
+         break;
+ 
++    case SPELL_EVOKE_LDECK_OF_WAR:           // ditto
++
+     case SPELL_THROW_ICICLE:
+         beam.name     = "shard of ice";
+         beam.damage   = dice_def(3, 8 + power / 11);
+@@ -1579,6 +1587,7 @@ bool setup_mons_cast(monster* mons, bolt &pbolt, spell_type spell_cast,
+     case SPELL_WATERSTRIKE:
+     case SPELL_FLAY:
+     case SPELL_CHANT_FIRE_STORM:
++    case SPELL_EVOKE_LDECK_OF_WAR:
+     case SPELL_CHANT_WORD_OF_ENTROPY:
+         pbolt.range = 0;
+         pbolt.glyph = 0;
+@@ -6240,6 +6249,10 @@ void mons_cast(monster* mons, bolt pbolt, spell_type spell_cast,
+         }
+         return;
+ 
++    case SPELL_EVOKE_LDECK_OF_WAR:
++        sabin_evoke_deck_of_war(50,mons,foe);
++        return;
++
+     case SPELL_DEATHS_DOOR:
+         if (!mons->has_ench(ENCH_DEATHS_DOOR))
+         {
+@@ -7786,6 +7799,161 @@ static void _siren_sing(monster* mons, bool avatar)
+ 
+     you.add_beholder(mons);
+ }
++///////////////SABIN'S DECKS
++
++void sabin_evoke_deck_of_war(int pow, monster* mons, actor* target)
++{
++    bolt beem;
++int thecard = roll_dice(1,15); // 15 cards only to keep it simple. 10th card is a foreign and harms sabin
++
++
++        if(thecard==1)
++            { // TUKIMA'S DANCE
++            simple_monster_message(mons,(" draws from his legendary deck of war... it is the Blade!"));
++            cast_tukimas_dance(pow, target);
++            }
++        else if(thecard==2)
++            { // THE DANCE BUGGED
++            monster *sabinwep =
++                create_monster(mgen_data(MONS_DANCING_WEAPON, SAME_ATTITUDE(mons), mons, 5, 0, mons->pos(), MHITYOU, MG_AUTOFOE),false);
++            if (sabinwep)
++            {
++              ASSERT(sabinwep->weapon() != nullptr);
++              item_def& wpn(*sabinwep->weapon());
++                    simple_monster_message(mons,(" draws from his legendary deck of war... it is the Dance!"));
++                    wpn.plus = random2(4) + 2;
++                    wpn.sub_type = (coinflip() ? WPN_DEMON_TRIDENT : WPN_EXECUTIONERS_AXE);
++
++                    set_item_ego_type(wpn, OBJ_WEAPONS,
++                              coinflip() ? SPWPN_SPEED : SPWPN_ELECTROCUTION);
++                    item_colour(wpn);
++                    sabinwep->flags |= MF_HARD_RESET;
++
++                      ghost_demon newstats;
++                      newstats.init_dancing_weapon(wpn, pow);
++
++                        sabinwep->set_ghost(newstats);
++                        sabinwep->ghost_demon_init();
++            }
++            else{ simple_monster_message(mons,(" draws from his legendary deck of war... it is the Software Bug!")); }
++
++            }
++        else if(thecard==3)
++            { //PENTAGRAM
++              monster_type dct, dct2;
++
++              simple_monster_message(mons,(" draws from his legendary deck of war... it is the Pentagram!"));
++
++              dct = random_choose(MONS_BALRUG, MONS_BLIZZARD_DEMON,
++              MONS_GREEN_DEATH, MONS_SHADOW_DEMON, MONS_CACODEMON,
++              MONS_HELL_BEAST, MONS_REAPER, MONS_LOROCYPROCA,
++              MONS_HELLION, MONS_SUN_DEMON, MONS_YNOXINUL, MONS_SOUL_EATER);
++              dct2 = random_choose(MONS_SHADOW_FIEND, MONS_BRIMSTONE_FIEND, // No pandemonium lord, instead a fiend. Still highly lethal!
++              MONS_ICE_FIEND, MONS_HELL_SENTINEL, MONS_BALRUG, MONS_BLIZZARD_DEMON,
++              MONS_GREEN_DEATH);
++              create_monster(mgen_data(dct, SAME_ATTITUDE(mons), mons, 3, 0, mons->pos(), MHITYOU, MG_AUTOFOE));
++              create_monster(mgen_data(dct2, SAME_ATTITUDE(mons), mons, 3, 0, mons->pos(), MHITYOU, MG_AUTOFOE));
++            }
++        else if(thecard==4)
++            { // POTION
++             simple_monster_message(mons,(" draws from his legendary deck of war... it is the potion!"));
++              int thepotion = roll_dice(1,4);
++                if(thepotion==1) mons->drink_potion_effect(POT_HASTE, true);
++                    else if(thepotion==2) mons->drink_potion_effect(POT_MIGHT, true);
++                    else if(thepotion==3) mons->drink_potion_effect(POT_RESISTANCE, true);
++                else mons->drink_potion_effect(POT_HEAL_WOUNDS, true);
++            }
++        else if(thecard==5)
++        {// HAMMER
++              simple_monster_message(mons,(" draws from his legendary deck of war... it is the Hammer!"));
++              mons_cast(mons, beem, SPELL_LEHUDIBS_CRYSTAL_SPEAR, MON_SPELL_NATURAL, true);
++        }
++        else if(thecard==6)
++        {// TORMENT
++              simple_monster_message(mons,(" draws from his legendary deck of war... it is the Pain!"));
++              torment(mons, TORMENT_CARDS, mons->pos());
++        }
++        else if(thecard==7)
++        {// ORB OF DESTRUCTION
++              simple_monster_message(mons,(" draws from his legendary deck of war... it is the Orb!"));
++              mons_cast(mons, beem, SPELL_IOOD, MON_SPELL_NATURAL, true);
++        }
++        else if(thecard==8)
++        {// CLOUD
++             simple_monster_message(mons,(" draws from his legendary deck of war... it is the Cloud!"));
++             mons_cast(mons, beem, SPELL_MIASMA_BREATH, MON_SPELL_NATURAL, true);
++        }
++        else if(thecard==9)
++        {// OH BOY, STORM
++             simple_monster_message(mons,(" draws from his legendary deck of war... it is the Storm!"));
++             mons_cast(mons, beem, SPELL_TORNADO, MON_SPELL_NATURAL, true);
++        }
++        else if(thecard==10)
++        {//elixir
++             simple_monster_message(mons,(" draws from his legendary deck of war... it is the Elixir!"));
++             mons->add_ench(mon_enchant(ENCH_REGENERATION, 0, mons, 100));
++        }
++        else if(thecard==11)
++        {//spark
++             simple_monster_message(mons,(" draws from his legendary deck of war... it is the Spark!"));
++             mons_cast(mons, beem, SPELL_ORB_OF_ELECTRICITY, MON_SPELL_NATURAL, true);
++        }
++        else if(thecard==12)
++        {//degeneration
++             simple_monster_message(mons,(" draws from his legendary deck of war... it is the Degeneration"));
++             if(coinflip()){mons_cast(mons, beem, SPELL_MALMUTATE, MON_SPELL_NATURAL, true);}
++                else{ mons_cast(mons,beem,SPELL_POLYMORPH, MON_SPELL_NATURAL, true); }
++        }
++        else if(thecard==13)
++        {
++              simple_monster_message(mons,(" draws from his legendary deck of war... it is the Shadow"));
++              mons->add_ench(mon_enchant(ENCH_INVIS, 0, mons, 100));
++        }
++        else if(thecard==14)
++        {
++              simple_monster_message(mons,(" draws from his legendary deck of war... it is the Illusion"));
++                monster* shadowclone = get_free_monster();
++                if (!shadowclone || monster_at(mons->pos())) return;
++                  shadowclone->type = MONS_SABIN;
++                  shadowclone->behaviour = BEH_SEEK;
++                  shadowclone->attitude = ATT_HOSTILE;
++                  shadowclone->set_position(mons->pos());
++                  shadowclone->mid = MID_NOBODY;
++                  mgrd(mons->pos()) = shadowclone->mindex();
++
++                    mons_summon_illusion_from(shadowclone, mons, SPELL_NO_SPELL, 1);
++                    shadowclone->reset();
++        }
++        if(thecard==15)
++            {
++             simple_monster_message(mons,(" draws a card and is stunned - that card wasn't supposed to be there!"));
++             _sabin_foreign_card(mons);
++        }
++
++
++}
++
++
++void _sabin_foreign_card(monster* mons){
++
++    bolt sabinbeam;
++    int misfortuneroll = roll_dice(1,7);
++        if(misfortuneroll==1){ simple_monster_message(mons,(" looks nervous.")); xom_acts(true, 100);}  // harmful to Sabin
++        else if(misfortuneroll==2){ simple_monster_message(mons,(" recognizes the card and screams!"));  mons->banish(&you); }
++        else if(misfortuneroll==3){ simple_monster_message(mons,(" looks rounder. It was the Feast!"));  mons->add_ench(mon_enchant(ENCH_SLOW, 0, mons, 30)); }
++        else if(misfortuneroll==4){ mons_cast(mons,sabinbeam,SPELL_TOMB_OF_DOROKLOHE,MON_SPELL_NATURAL);}
++        else if(misfortuneroll==5){
++                mons->drain_exp(mons,true,15);
++                simple_monster_message(mons,(" looks much weaker. It was the Wraith!"));
++                                   }
++        else if(misfortuneroll==6){ simple_monster_message(mons,(" is washed by mutagenic energies!")); mons->malmutate("Helix Card");}
++        else{ // the 7
++            if(coinflip()) simple_monster_message(mons,(" summons a genie and acquires a new deck of cards!"));
++            else simple_monster_message(mons,(" looks ill. Must have gotten wrong end of the bargain."));
++            }
++
++}
++
+ 
+ // Checks to see if a particular spell is worth casting in the first place.
+ static bool _ms_waste_of_time(monster* mon, mon_spell_slot slot)
+@@ -8382,6 +8550,7 @@ static bool _ms_waste_of_time(monster* mon, mon_spell_slot slot)
+         return true;
+ 
+     case SPELL_CHANT_FIRE_STORM:
++    case SPELL_EVOKE_LDECK_OF_WAR:
+     case SPELL_CHANT_WORD_OF_ENTROPY:
+         return mon->has_ench(ENCH_BREATH_WEAPON) || !foe;
+ 
+diff --git a/crawl-ref/source/mon-cast.h b/crawl-ref/source/mon-cast.h
+index 5cf8e19..0c81be8 100644
+--- a/crawl-ref/source/mon-cast.h
++++ b/crawl-ref/source/mon-cast.h
+@@ -39,6 +39,9 @@ bool setup_mons_cast(monster* mons, bolt &pbolt, spell_type spell_cast,
+ 
+ void mons_cast_haunt(monster* mons);
+ bool mons_word_of_recall(monster* mons, int recall_target);
++
++void sabin_evoke_deck_of_war(int pow, monster* mons, actor* target);
++void _sabin_foreign_card(monster* mons);
+ void finish_chanting_fire_storm(monster* mons, coord_def foe_pos);
+ void finish_chanting_word_of_entropy(monster* mons, actor *mons_foe);
+ void mons_cast_spectral_orcs(monster* mons);
+diff --git a/crawl-ref/source/mon-data.h b/crawl-ref/source/mon-data.h
+index 2b62af2..fadabd6 100644
+--- a/crawl-ref/source/mon-data.h
++++ b/crawl-ref/source/mon-data.h
+@@ -6228,6 +6228,19 @@ DUMMY(MONS_GOLEM, '8', LIGHTGREY, "golem")
+ },
+ 
+ {
++    MONS_SABIN, 'K', LIGHTGREEN, "Sabin",
++    M_UNIQUE | M_SEE_INVIS | M_WARM_BLOOD | M_SPEAKS | M_SPEAKS | M_MALE,
++    MR_RES_POISON,
++    400, 40, MONS_KOBOLD, MONS_KOBOLD, MH_NATURAL, 150,
++    { {AT_HIT, AF_PLAIN, 22}, AT_NO_ATK, AT_NO_ATK,
++       AT_NO_ATK },
++    { 15, 0, 0, 122 },
++    4, 30, MST_SABIN, CE_NOCORPSE, S_SHOUT,
++    I_NORMAL, HT_LAND, FL_NONE, 10, DEFAULT_ENERGY,
++    MONUSE_WEAPONS_ARMOUR, MONEAT_NOTHING, SIZE_SMALL, MON_SHAPE_HUMANOID
++},
++
++{
+     // XP modifier is very high to compensate for 4 created-friendly humans
+     MONS_PIKEL, 'K', BLUE, "Pikel",
+     M_WARM_BLOOD | M_SPEAKS | M_UNIQUE | M_MALE,
+diff --git a/crawl-ref/source/mon-gear.cc b/crawl-ref/source/mon-gear.cc
+index 8ad550c..fde1139 100644
+--- a/crawl-ref/source/mon-gear.cc
++++ b/crawl-ref/source/mon-gear.cc
+@@ -1130,6 +1130,17 @@ static void _give_weapon(monster* mon, int level, bool melee_only = false,
+                                                  1, SPWPN_DRAINING,
+                                                  0));
+         break;
++    case MONS_SABIN:
++        force_item = true;
++        force_uncursed = true;
++        item.base_type = OBJ_WEAPONS;
++        item.sub_type  = coinflip() ? WPN_RAPIER : WPN_QUICK_BLADE;
++        set_item_ego_type(item, OBJ_WEAPONS,
++                          random_choose_weighted(2, SPWPN_CHAOS,
++                                                 2, SPWPN_ELECTROCUTION,
++                                                 2, SPWPN_FREEZING,
++                                                 0));
++        break;
+ 
+     case MONS_MAURICE:
+         item.base_type = OBJ_WEAPONS;
+diff --git a/crawl-ref/source/mon-spell.h b/crawl-ref/source/mon-spell.h
+index e47e66f..0d18820 100644
+--- a/crawl-ref/source/mon-spell.h
++++ b/crawl-ref/source/mon-spell.h
+@@ -796,6 +796,14 @@ static const mon_spellbook mspell_list[] =
+       }
+     },
+ 
++    {  MST_SABIN,
++      {
++       { SPELL_EVOKE_LDECK_OF_WAR, 30, MON_SPELL_NATURAL },
++       { SPELL_BLINK_RANGE, 22, MON_SPELL_WIZARD },
++       { SPELL_BLINK_AWAY, 22, MON_SPELL_WIZARD | MON_SPELL_EMERGENCY},
++      }
++    },
++
+     { MST_MENKAURE,
+       {
+        { SPELL_PAIN, 18, MON_SPELL_WIZARD },
+diff --git a/crawl-ref/source/rltiles/dc-mon.txt b/crawl-ref/source/rltiles/dc-mon.txt
+index 5c78816..da0a368 100644
+--- a/crawl-ref/source/rltiles/dc-mon.txt
++++ b/crawl-ref/source/rltiles/dc-mon.txt
+@@ -720,6 +720,7 @@ death_ooze MONS_DEATH_OOZE
+ ## Kobolds ('K')
+ %sdir mon/unique
+ sonja MONS_SONJA
++sabin MONS_SABIN
+ pikel MONS_PIKEL
+ %sdir mon
+ kobold MONS_KOBOLD
+diff --git a/crawl-ref/source/rltiles/mon/unique/sabin.png b/crawl-ref/source/rltiles/mon/unique/sabin.png
+new file mode 100644
+index 0000000000000000000000000000000000000000..092416cc5a20ce6a1aeccbbcf005b0ab18d89e61
+GIT binary patch
+literal 1624
+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
+WMFE)N(BiiM0000<MNUMnLSTZ$4g4<v
+
+literal 0
+HcmV?d00001
+
+diff --git a/crawl-ref/source/spl-data.h b/crawl-ref/source/spl-data.h
+index 51105e1..b337e71 100644
+--- a/crawl-ref/source/spl-data.h
++++ b/crawl-ref/source/spl-data.h
+@@ -3619,6 +3619,17 @@ static const struct spell_desc spelldata[] =
+ },
+ 
+ {
++    SPELL_EVOKE_LDECK_OF_WAR, "Evoke Legendary Deck of War",
++    SPTYP_CONJURATION,
++    SPFLAG_BATTLE | SPFLAG_MONSTER,
++    5,
++    200,
++    -1, -1,
++    3, 0,
++    nullptr,
++},
++
++{
+     SPELL_BOLT_OF_DISTORTION, "Bolt of Distortion",
+     SPTYP_TRANSLOCATION | SPTYP_CONJURATION,
+     SPFLAG_DIR_OR_TARGET | SPFLAG_NEEDS_TRACER,
+diff --git a/crawl-ref/source/spl-other.cc b/crawl-ref/source/spl-other.cc
+index 8a773f3..4481447 100644
+--- a/crawl-ref/source/spl-other.cc
++++ b/crawl-ref/source/spl-other.cc
+@@ -483,3 +483,4 @@ spret_type cast_darkness(int pow, bool fail)
+ 
+     return SPRET_SUCCESS;
+ }
++
+diff --git a/crawl-ref/source/tilepick.cc b/crawl-ref/source/tilepick.cc
+index 9d0d4ee..999cc01 100644
+--- a/crawl-ref/source/tilepick.cc
++++ b/crawl-ref/source/tilepick.cc
+@@ -2148,6 +2148,8 @@ tileidx_t tileidx_monster_base(int type, bool in_water, int colour, int number,
+     // kobolds ('K')
+     case MONS_SONJA:
+         return TILEP_MONS_SONJA;
++    case MONS_SABIN:
++        return TILEP_MONS_SABIN;
+     case MONS_PIKEL:
+         return TILEP_MONS_PIKEL;
+ 
+-- 
+2.1.0
+

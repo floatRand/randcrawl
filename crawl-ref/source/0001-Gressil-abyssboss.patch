@@ -1,0 +1,585 @@
+From 51120c99421927d0c33072737cc852283b08beba Mon Sep 17 00:00:00 2001
+From: SAS <->
+Date: Mon, 13 Apr 2015 03:21:41 +0300
+Subject: [PATCH] Gressil, abyssboss
+
+---
+ crawl-ref/source/beam.cc                        |  23 +++-
+ crawl-ref/source/cloud.cc                       |   2 +
+ crawl-ref/source/dat/database/montitle.txt      |   4 +
+ crawl-ref/source/dat/des/branches/abyss.des     | 165 +++++++++++++++++++++++-
+ crawl-ref/source/dat/descript/monsters.txt      |   7 +-
+ crawl-ref/source/enum.h                         |   6 +-
+ crawl-ref/source/mon-act.cc                     |  14 ++
+ crawl-ref/source/mon-cast.cc                    |   9 ++
+ crawl-ref/source/mon-data.h                     |  13 ++
+ crawl-ref/source/mon-spell.h                    |  10 ++
+ crawl-ref/source/rltiles/dc-mon.txt             |   1 +
+ crawl-ref/source/rltiles/mon/unique/gressil.png | Bin 0 -> 694 bytes
+ crawl-ref/source/spl-data.h                     |  11 ++
+ crawl-ref/source/spl-zap.cc                     |   1 +
+ crawl-ref/source/tilepick.cc                    |   3 +
+ crawl-ref/source/tilesdl.cc                     |   1 +
+ crawl-ref/source/zap-data.h                     |  16 +++
+ 17 files changed, 282 insertions(+), 4 deletions(-)
+ create mode 100644 crawl-ref/source/rltiles/mon/unique/gressil.png
+
+diff --git a/crawl-ref/source/beam.cc b/crawl-ref/source/beam.cc
+index 5844ce0..9a260f3 100644
+--- a/crawl-ref/source/beam.cc
++++ b/crawl-ref/source/beam.cc
+@@ -52,6 +52,7 @@
+ #include "spl-clouds.h"
+ #include "spl-damage.h"
+ #include "spl-goditem.h"
++#include "spl-miscast.h"
+ #include "spl-monench.h"
+ #include "spl-other.h"
+ #include "spl-summoning.h"
+@@ -3749,6 +3750,7 @@ void bolt::affect_player_enchantment(bool resistible)
+             obvious_effect = true;
+         break;
+ 
++
+     default:
+         // _All_ enchantments should be enumerated here!
+         mpr("Software bugs nibble your toes!");
+@@ -3997,6 +3999,12 @@ void bolt::affect_player()
+     if (origin_spell == SPELL_QUICKSILVER_BOLT)
+         debuff_player();
+ 
++    if (origin_spell == SPELL_BOLT_OF_DISTORTION)
++    {
++       if(!( you.stasis() || you.no_tele())) MiscastEffect(&you, agent(), SPELL_MISCAST, SPTYP_TRANSLOCATION, 9, 90, "bolt of distortion", NH_NEVER );
++       else MiscastEffect(&you, agent(), SPELL_MISCAST, SPTYP_TRANSLOCATION, 6, 90, "bolt of distortion", NH_NEVER );
++    }
++
+     dprf(DIAG_BEAM, "Damage: %d", hurted);
+ 
+     if (hurted > 0 || old_hp < you.hp || was_affected)
+@@ -5759,6 +5767,19 @@ mon_resist_type bolt::apply_enchantment_to_monster(monster* mon)
+         return MON_AFFECTED;
+     }
+ 
++    case BEAM_DISTORTION:
++    {
++        if(!mon->no_tele()){
++             MiscastEffect(mon, agent(), SPELL_MISCAST , SPTYP_TRANSLOCATION, 9, 90, "beam of distortion", NH_NEVER);
++             obvious_effect = true;
++             return MON_AFFECTED;
++        }
++        else MiscastEffect(mon, agent(), SPELL_MISCAST , SPTYP_TRANSLOCATION, 3, 90, "beam of distortion", NH_NEVER);
++             obvious_effect = true;
++             return MON_AFFECTED;
++
++    }
++
+     default:
+         break;
+     }
+@@ -6519,7 +6540,7 @@ static string _beam_type_name(beam_type type)
+     case BEAM_DEATH_RATTLE:          return "breath of the dead";
+     case BEAM_RESISTANCE:            return "resistance";
+     case BEAM_ATTRACT:               return "attraction";
+-
++    case BEAM_DISTORTION:            return "distortion";
+     case NUM_BEAMS:                  die("invalid beam type");
+     }
+     die("unknown beam type");
+diff --git a/crawl-ref/source/cloud.cc b/crawl-ref/source/cloud.cc
+index 70b23f8..bb1abcc 100644
+--- a/crawl-ref/source/cloud.cc
++++ b/crawl-ref/source/cloud.cc
+@@ -1003,6 +1003,8 @@ bool actor_cloud_immune(const actor *act, const cloud_struct &cloud)
+         return act->res_negative_energy() >= 3;
+     case CLOUD_TORNADO:
+         return act->res_wind();
++    case CLOUD_CHAOS:
++        return act->type == MONS_GRESSIL;
+     default:
+         return false;
+     }
+diff --git a/crawl-ref/source/dat/database/montitle.txt b/crawl-ref/source/dat/database/montitle.txt
+index c49e61a..79db491 100644
+--- a/crawl-ref/source/dat/database/montitle.txt
++++ b/crawl-ref/source/dat/database/montitle.txt
+@@ -295,3 +295,7 @@ Xtahua title
+ 
+ Xtahua the Ancient
+ %%%%
++Gressil title
++
++Gressil the Grand Corruptor
++%%%%
+diff --git a/crawl-ref/source/dat/des/branches/abyss.des b/crawl-ref/source/dat/des/branches/abyss.des
+index 1470f78..3829b2b 100644
+--- a/crawl-ref/source/dat/des/branches/abyss.des
++++ b/crawl-ref/source/dat/des/branches/abyss.des
+@@ -5,6 +5,7 @@
+ # Abyssal vaults should usually be minivaults and floating vaults, no larger
+ # than 28x23. Encompass vaults will be rejected at compile time, and
+ # other orientations will produce weird results.
++: require('dlua/vault.lua')
+ 
+ {{
+  -- Since abyssal stairs don't spawn at the bottom of the Abyss,
+@@ -35,8 +36,14 @@ function abyss_entry(e, glyph)
+     e.kfeat(glyph .. ' = enter_abyss')
+   end
+ end
++
++function gressil_warning()
++ crawl.mpr("You sense a powerful and corrupting presence nearby...", "warning");
++end
++
+ }}
+ 
++
+ ###############################################################################
+ # Abyss entries.
+ # 1/3 chance to appear on D:21-27, and guaranteed on D:25.
+@@ -1652,7 +1659,7 @@ ENDMAP
+ 
+ 
+ NAME: nicolae_abyss_rune_containment_breach
+-TAGS: abyss_rune unrand patrolling
++TAGS: abyss_rune patrolling
+ SUBST: N = nn., n = nnnc
+ NSUBST: v = 2:v / *:v.
+ KITEM: O = abyssal rune of zot
+@@ -1680,6 +1687,162 @@ MAP
+        .....
+ ENDMAP
+ 
++NAME:  rand_gressil_vault
++TAGS:  abyss_rune gressil unrand no_monster_gen patrolling
++DEPTH: Abyss:5
++WEIGHT: 50
++KMONS:  1 = gressil 
++KITEM:  O = abyssal rune of Zot
++KITEM: d = randbook numspells:7 owner:Gressil disc:translocations/potion of experience/triple sword unrand:plutonium_sword
++KITEM: e = manual of translocations/manual of summoning/manual of spellcasting/acquire wand 
++KITEM: f = scroll of acquirement/randart any weapon ego:distortion
++KITEM: g = randart cloak/randart any jewellery/acquire armour/acquire wand
++KFEAT:  _ = altar_lugonu
++TILE:   v = wall_hall
++COLOUR:  v = warp
++FTILE:  ._+O1|abcdefghi$b = floor_crystal_squares
++SUBST:  ' = .
++veto {{ return you.uniques("Gressil") }}
++: gressil_warning()
++MAP
++    '''''''''''
++   ''vvvvvvvvv''
++  'vvvvvvvvvvvvv'
++''vvvvvvv_vvvvvvv''
++'vvvvfev.O.v$$vvvv'
++'vvvdfe+...+$$$vvv'
++'vvvgg|vv.vv$$$vvv'
++'vvvvvvvv+vvvvvvvv'
++'v...............v'
++'v.......1.......v'
++'v...............v'
++'v...............v'
++'v...............v'
++'v...............v'
++'v...............v'
++'v...............v'
++'v...............v'
++'v......v.v......v'
++'vv....vv.vv....vv'
++'vvvvvvvv.vvvvvvvv'
++'v'v'vvvv+vvvv'v'v'
++'''v'v''v@v''v'v'''
++   '''''''''''''
++ENDMAP
++
++NAME:  rand_gressil_vault_cross
++TAGS:  abyss_rune gressil unrand no_monster_gen patrolling
++DEPTH: Abyss:5
++WEIGHT: 70
++KMONS:  1 = gressil 
++KITEM:  O = abyssal rune of Zot
++KITEM: d = randbook numspells:7 owner:Gressil disc:translocations/potion of experience/triple sword unrand:plutonium_sword
++KITEM: e = manual of translocations/manual of summoning/manual of spellcasting/acquire wand 
++KITEM: f = scroll of acquirement/randart any weapon ego:distortion
++KITEM: g = randart cloak/randart any jewellery/acquire armour/acquire wand
++KFEAT:  _ = altar_lugonu
++TILE:   v = wall_hall
++COLOUR:  v = warp
++FTILE:  ._+O1|abcdefghi$b = floor_crystal_squares
++SUBST:  ' = .
++veto {{ return you.uniques("Gressil") }}
++: gressil_warning()
++MAP
++     '''''''
++ '''''vvvvv'''''
++ 'vvvvvv_vvvvvv'
++ 'vvvvv...vvvvv'
++@'+..vv...+eevv'
++ 'vv.vv...vvdvv''
++'vvv+v.....vvvvv'
++'vv...........vv'
++'v_.....1....._v'
++'vv...........vv'
++'vvvvv.....v+vvv'
++ 'vvfvv...vvgvv''
++ 'vvfg+...vO$vv'
++ 'vvvvv...vvvvv'
++ 'vvvvvv_vvvvvv'
++ '''''vvvvv'''''
++     '''''''
++ENDMAP
++
++NAME:  rand_gressil_vault_arrow
++TAGS:  abyss_rune gressil unrand no_monster_gen patrolling
++DEPTH: Abyss:5
++WEIGHT: 70
++KMONS:  1 = gressil 
++KITEM:  O = abyssal rune of Zot
++KITEM: d = randbook numspells:7 owner:Gressil disc:translocations/potion of experience/triple sword unrand:plutonium_sword
++KITEM: e = manual of translocations/manual of summoning/manual of spellcasting/acquire wand 
++KITEM: f = scroll of acquirement/randart any weapon ego:distortion
++KITEM: g = randart cloak/randart any jewellery/acquire armour/acquire wand
++KFEAT:  _ = altar_lugonu
++TILE:   v = wall_hall
++COLOUR:  v = warp
++FTILE:  ._+O1|abcdefghi$b = floor_crystal_squares
++SUBST:  ' = .
++veto {{ return you.uniques("Gressil") }}
++: gressil_warning()
++MAP
++      '''''      
++    '''vvv'''    
++   ''vvv_vvv''   
++  ''vv.....vv''  
++ ''vv.......vv'' 
++''vv....1....vv''
++'vv...........vv'
++'vv+v.......v+vv'
++'vf$vv.....vv$$v'
++'vfgvvv...vvvgev'
++'v+vv'v...v'vvev'
++'vOv''v...v''vdv'
++'vvv''v...v''vvv'
++''''''v...v''''''
++''v'''v...v'''v' 
++ ''''vv...vv'''' 
++   'vvvv.vvvv''
++  'vvvvv+vvvvv'
++  ''''''@''''''
++ENDMAP
++
++NAME:  rand_gressil_vault_cube
++TAGS:  abyss_rune gressil unrand no_monster_gen patrolling
++DEPTH: Abyss:5
++WEIGHT: 70
++KMONS:  1 = gressil 
++KITEM:  O = abyssal rune of Zot
++KITEM: d = randbook numspells:7 owner:Gressil disc:translocations/potion of experience/triple sword unrand:plutonium_sword
++KITEM: e = manual of translocations/manual of summoning/manual of spellcasting/acquire wand 
++KITEM: f = scroll of acquirement/randart any weapon ego:distortion
++KITEM: g = randart cloak/randart any jewellery/acquire armour/acquire wand
++KFEAT:  _ = altar_lugonu
++TILE:   v = wall_hall
++COLOUR:  v = warp
++FTILE:  ._+O1|abcdefghi$b = floor_crystal_squares
++SUBST:  ' = .
++veto {{ return you.uniques("Gressil") }}
++: gressil_warning()
++MAP
++'''''''''''''''''
++'vvvvvvvvvvvvvvv'
++@+.............+'
++'v.vvvvv+vvvvv.v'
++'v.v.........v.v'
++'v.v.........v.v'
++'v.v..vvvvv..v.v'
++'v.v..vdegv..v.v'
++'v.+..v|Ofv..+.v'
++'v.v..vgfev..v.v'
++'v.v..vv+vv..v.v'
++'v.v.........v.v'
++'v.v....1....v.v'
++'v.vvvv...vvvv.v'
++'+.vvvvv_vvvvv.+'
++'vvvvvvvvvvvvvvv'
++'''''''''''''''''
++ENDMAP
++
+ ###############################################################################
+ # Abyss Exit Vaults
+ # Note: Don't tag your abyss exit with allow_dup unless it's small and
+diff --git a/crawl-ref/source/dat/descript/monsters.txt b/crawl-ref/source/dat/descript/monsters.txt
+index 12a0aae..c941103 100644
+--- a/crawl-ref/source/dat/descript/monsters.txt
++++ b/crawl-ref/source/dat/descript/monsters.txt
+@@ -1,4 +1,4 @@
+-%%%%
++﻿%%%%
+ # Glyph-specific suffixes
+ # Only for non-uniques nagas.
+ __cap-N_suffix
+@@ -145,6 +145,11 @@ Ereshkigal
+ 
+ A fearsome arch-fiend who rules the deathly netherworld of Tartarus.
+ %%%%
++Gressil
++
++A powerful creature of the abyss, cloaked in clouds of seething chaos. Powerful
++distortional energies crackle around him.
++%%%%
+ Erica
+ 
+ A wild-tempered adventuress.
+diff --git a/crawl-ref/source/enum.h b/crawl-ref/source/enum.h
+index 66a5364..dd953fa 100644
+--- a/crawl-ref/source/enum.h
++++ b/crawl-ref/source/enum.h
+@@ -584,7 +584,7 @@ enum beam_type                  // bolt::flavour
+     BEAM_RESISTANCE,
+     BEAM_ATTRACT,
+     BEAM_LAST_ENCHANTMENT = BEAM_ATTRACT,
+-
++    BEAM_DISTORTION,
+     BEAM_MEPHITIC,
+     BEAM_INK,
+     BEAM_HOLY_FLAME,
+@@ -3371,6 +3371,8 @@ enum monster_type                      // menv[].type
+     MONS_SALAMANDER_STORMCALLER,
+     MONS_ENTROPY_WEAVER,
+     MONS_MOON_TROLL,
++    MONS_GRESSIL,
++
+ #endif
+ 
+     NUM_MONSTERS,               // used for polymorph
+@@ -4453,6 +4455,7 @@ enum spell_type
+     SPELL_GRAVITAS,
+     SPELL_CHANT_FIRE_STORM,
+     SPELL_CHANT_WORD_OF_ENTROPY,
++    SPELL_BOLT_OF_DISTORTION,
+     NUM_SPELLS
+ };
+ 
+@@ -4622,6 +4625,7 @@ enum zap_type
+     ZAP_CORROSIVE_BOLT,
+     ZAP_RANDOM_BOLT_TRACER,
+     ZAP_SCATTERSHOT,
++    ZAP_DISTORTION,
+ 
+     NUM_ZAPS
+ };
+diff --git a/crawl-ref/source/mon-act.cc b/crawl-ref/source/mon-act.cc
+index 8c32065..289e14e 100644
+--- a/crawl-ref/source/mon-act.cc
++++ b/crawl-ref/source/mon-act.cc
+@@ -2878,6 +2878,20 @@ static void _post_monster_move(monster* mons)
+             }
+     }
+ 
++    if (mons->type == MONS_GRESSIL)
++    {
++        cloud_type ctype = CLOUD_CHAOS;
++
++        for (adjacent_iterator ai(mons->pos()); ai; ++ai)
++            if (!cell_is_solid(*ai)
++                && (env.cgrid(*ai) == EMPTY_CLOUD
++                    || env.cloud[env.cgrid(*ai)].type == ctype))
++            {
++                place_cloud(ctype, *ai, 2 + random2(6), mons);
++            }
++
++    }
++
+     if (mons->type == MONS_WATER_NYMPH)
+     {
+         for (adjacent_iterator ai(mons->pos(), false); ai; ++ai)
+diff --git a/crawl-ref/source/mon-cast.cc b/crawl-ref/source/mon-cast.cc
+index e62a22d..9cbbf0f 100644
+--- a/crawl-ref/source/mon-cast.cc
++++ b/crawl-ref/source/mon-cast.cc
+@@ -695,6 +695,15 @@ bolt mons_spell_beam(monster* mons, spell_type spell_cast, int power,
+         beam.pierce   = true;
+         break;
+ 
++    case SPELL_BOLT_OF_DISTORTION:
++        beam.name     = "bolt of distortion";
++        beam.damage   = dice_def(3, 8 + power / 11);
++        beam.colour   = MAGENTA;
++        beam.flavour  = BEAM_DISTORTION;
++        beam.hit      = 17 + power / 25;
++        beam.pierce   = true;
++        break;
++
+     case SPELL_THROW_ICICLE:
+         beam.name     = "shard of ice";
+         beam.damage   = dice_def(3, 8 + power / 11);
+diff --git a/crawl-ref/source/mon-data.h b/crawl-ref/source/mon-data.h
+index a93e450..ee2ca38 100644
+--- a/crawl-ref/source/mon-data.h
++++ b/crawl-ref/source/mon-data.h
+@@ -6891,6 +6891,19 @@ DUMMY(MONS_GOLEM, '8', LIGHTGREY, "golem")
+     MONUSE_WEAPONS_ARMOUR, MONEAT_NOTHING, SIZE_LARGE, MON_SHAPE_HUMANOID
+ },
+ 
++{
++    MONS_GRESSIL, '&', BLUE, "Gressil",
++    M_UNIQUE | M_FIGHTER | M_INVIS | M_SEE_INVIS | M_SPEAKS | M_MALE,
++    MR_RES_POISON | MR_RES_ELEC | MR_RES_NEG,
++    1300, 15, MONS_GRESSIL, MONS_GRESSIL, MH_DEMONIC, MAG_IMMUNE,
++    { {AT_HIT, AF_DISTORT, 40}, AT_NO_ATK, AT_NO_ATK, AT_NO_ATK },
++    { 18, 0, 0, 380 },
++    10, 15, MST_GRESSIL, CE_NOCORPSE, S_SHOUT,
++    I_HIGH, HT_LAND, FL_LEVITATE, 12, DEFAULT_ENERGY,
++    MONUSE_OPEN_DOORS, MONEAT_NOTHING, SIZE_LARGE, MON_SHAPE_HUMANOID
++},
++
++
+ // Impossible to hit, impossible to damage, immune to everything,
+ // unkillable, just sits there doing nothing but casting Shadow Creatures
+ // over and over.
+diff --git a/crawl-ref/source/mon-spell.h b/crawl-ref/source/mon-spell.h
+index 75f6901..7e8bd83 100644
+--- a/crawl-ref/source/mon-spell.h
++++ b/crawl-ref/source/mon-spell.h
+@@ -922,6 +922,16 @@ static const mon_spellbook mspell_list[] =
+       }
+     },
+ 
++    {  MST_GRESSIL,
++      {
++       { SPELL_SHADOW_CREATURES, 18, MON_SPELL_DEMONIC },
++       { SPELL_BOLT_OF_DISTORTION, 35, MON_SPELL_DEMONIC },
++       { SPELL_MALIGN_GATEWAY, 25, MON_SPELL_DEMONIC },
++       { SPELL_BLINK, 20, MON_SPELL_DEMONIC },
++       { SPELL_TELEPORT_OTHER, 25, MON_SPELL_DEMONIC | MON_SPELL_EMERGENCY },
++      }
++    },
++
+     {  MST_ANTAEUS,
+       {
+        { SPELL_LIGHTNING_BOLT, 24, MON_SPELL_DEMONIC },
+diff --git a/crawl-ref/source/rltiles/dc-mon.txt b/crawl-ref/source/rltiles/dc-mon.txt
+index a100b20..e5da4ee 100644
+--- a/crawl-ref/source/rltiles/dc-mon.txt
++++ b/crawl-ref/source/rltiles/dc-mon.txt
+@@ -14,6 +14,7 @@ gloorx_vloq MONS_GLOORX_VLOQ
+ lom_lobon MONS_LOM_LOBON
+ mnoleg MONS_MNOLEG
+ antaeus MONS_ANTAEUS
++gressil MONS_GRESSIL
+ lernaean_hydra01 MONS_LERNAEAN_HYDRA
+ lernaean_hydra02
+ lernaean_hydra03
+diff --git a/crawl-ref/source/rltiles/mon/unique/gressil.png b/crawl-ref/source/rltiles/mon/unique/gressil.png
+new file mode 100644
+index 0000000000000000000000000000000000000000..e7a00d6cbc394de34a12a8e84a238d972fe9f139
+GIT binary patch
+literal 694
+zcmV;n0!jUeP)<h;3K|Lk000e1NJLTq001BW001xu0{{R3M{<Z=00015P)t-s05miJ
+zLqh;iPyk+D0B2_ae0%_rkpKVy0H2=#zrO(A-!T9HMF0R(Q>I@40Av^ebaR=10RVp=
+z0e^2IkdVK9eZ8ot-`m^&z`*_A0s-;EQ1{<s{{sU5|Nl(&Iw1f600DGTPE!Ct=GbNc
+z0004EOGiWihy@);00009a7bBm000XU000XU0RWnu7ytkO2XskIMF-ym4Gu3gW@oDd
+z0005iNkl<ZILmdE+iC<M5JY`gDVc|b0R<uJ|NmyHx}DLUO(X<%>R5J{my|e=)__Ke
+z0|QGPqqi0aBph%Ps-yQ_qXVR30+c}@I((>~xb@bnuYnzSPXK7O)+P(|N#Hzj-oS^d
+zblf_>zu&hm_pXKbe-+{js9VaYy{i^MTQ;)?+P7-@*t^Bg22fWR5ikda=(?{kz8s+P
+zYxmLm9}WUEn<ASDfOlD~Ln_S5nyGu12IwQ@-Ym!sI2GNP8JR%<;6ovq?B@ZiO!dzn
+zRn#!z+S&kIUsc2dNOnZ*qe}1^BQUpxeHc;Oq_49%bI@Mfk!<t8L;#vOrbAP~F({SS
+z{7h3PP!NN1{Q~4z@C1ed)4*!N+AIP--wkp`08YPh_X4k%fWA8%xC;RFS1x!IiLo+5
+zc@+Wc4zo`OJb(lOWe4P8y6-weDMuMANl(gjdQ`m!BLH^fJbJ4PM+E#xCSMb7AfVmA
+zd>!n}=u%IIc0EP#Q|lHB5Rq+WnJ*0NMtg|@0LGP^fbWjidC;I7#{x*?dGysOXX{Td
+z-vx-s+5iD%8U%puMks|c9MGD1dk&G!fs+bDIQ$mm=NoNZ!0cyxk2f2>F8<ZiUijCW
+czo;;N0W{z{_1S;??*IS*07*qoM6N<$f^B3PT>t<8
+
+literal 0
+HcmV?d00001
+
+diff --git a/crawl-ref/source/spl-data.h b/crawl-ref/source/spl-data.h
+index d9dde9e..51105e1 100644
+--- a/crawl-ref/source/spl-data.h
++++ b/crawl-ref/source/spl-data.h
+@@ -3619,6 +3619,17 @@ static const struct spell_desc spelldata[] =
+ },
+ 
+ {
++    SPELL_BOLT_OF_DISTORTION, "Bolt of Distortion",
++    SPTYP_TRANSLOCATION | SPTYP_CONJURATION,
++    SPFLAG_DIR_OR_TARGET | SPFLAG_NEEDS_TRACER,
++    6,
++    200,
++    7, 7,
++    6, 0,
++    nullptr,
++},
++
++{
+     SPELL_NO_SPELL, "nonexistent spell",
+     SPTYP_NONE,
+     SPFLAG_TESTING,
+diff --git a/crawl-ref/source/spl-zap.cc b/crawl-ref/source/spl-zap.cc
+index 961f5e6..f8efce0 100644
+--- a/crawl-ref/source/spl-zap.cc
++++ b/crawl-ref/source/spl-zap.cc
+@@ -60,6 +60,7 @@ static int _spl_zaps[][2] =
+     // These are all for zap -> spell lookup.
+     { SPELL_QUICKSILVER_BOLT, ZAP_QUICKSILVER_BOLT },
+     { SPELL_QUICKSILVER_BOLT, ZAP_BREATHE_POWER },
++    { SPELL_BOLT_OF_DISTORTION, ZAP_DISTORTION },
+     { SPELL_STICKY_FLAME, ZAP_STICKY_FLAME },
+     { SPELL_STICKY_FLAME_RANGE, ZAP_STICKY_FLAME_RANGE },
+     { SPELL_STICKY_FLAME_SPLASH, ZAP_BREATHE_STICKY_FLAME },
+diff --git a/crawl-ref/source/tilepick.cc b/crawl-ref/source/tilepick.cc
+index 415ded2..063a6bc 100644
+--- a/crawl-ref/source/tilepick.cc
++++ b/crawl-ref/source/tilepick.cc
+@@ -2263,6 +2263,9 @@ tileidx_t tileidx_monster_base(int type, bool in_water, int colour, int number,
+         return TILEP_MONS_ASMODEUS;
+     case MONS_ERESHKIGAL:
+         return TILEP_MONS_ERESHKIGAL;
++    case MONS_GRESSIL:
++        return TILEP_MONS_GRESSIL;
++
+     }
+ 
+     return TILEP_MONS_PROGRAM_BUG;
+diff --git a/crawl-ref/source/tilesdl.cc b/crawl-ref/source/tilesdl.cc
+index 38f1960..de692d3 100644
+--- a/crawl-ref/source/tilesdl.cc
++++ b/crawl-ref/source/tilesdl.cc
+@@ -1531,6 +1531,7 @@ void TilesFramework::add_text_tag(text_tag_type type, const monster_info& mon)
+         || genus == MONS_HELL_LORD
+         || mon.type == MONS_ANTAEUS
+         || mon.type == MONS_LERNAEAN_HYDRA
++        || mon.type == MONS_GRESSIL
+         || mon.mb[MB_NO_NAME_TAG])
+     {
+         return;
+diff --git a/crawl-ref/source/zap-data.h b/crawl-ref/source/zap-data.h
+index 0169190..bdfdb48 100644
+--- a/crawl-ref/source/zap-data.h
++++ b/crawl-ref/source/zap-data.h
+@@ -1195,4 +1195,20 @@ static const zap_info zap_data[] =
+     6
+ },
+ 
++{
++    ZAP_DISTORTION,
++    "bolt of distortion",
++    200,
++    new calcdice_calculator<6, 18, 2, 3>,
++    new tohit_calculator<10, 1, 25>,
++    MAGENTA,
++    false,
++    BEAM_MMISSILE,
++    DCHAR_FIRED_ZAP,
++    true,
++    true,
++    false,
++    6
++},
++
+ };
+-- 
+2.1.0
+

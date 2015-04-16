@@ -3059,7 +3059,6 @@ enum monster_type                      // menv[].type
     MONS_DEATH_COB,
     MONS_CURSE_TOE,
     MONS_CURSE_SKULL,
-    MONS_DEATHS_HAND,
     MONS_PROFANE_SERVITOR,
 #if TAG_MAJOR_VERSION > 34
     MONS_ANCIENT_CHAMPION,
@@ -3144,9 +3143,7 @@ enum monster_type                      // menv[].type
     MONS_TIAMAT,
     MONS_ROXANNE,
     MONS_SONJA,
-    MONS_SABIN,
     MONS_EUSTACHIO,
-    MONS_GRATON,
     MONS_AZRAEL,
     MONS_ILSUIW,
     MONS_PRINCE_RIBBIT,
@@ -3377,7 +3374,9 @@ enum monster_type                      // menv[].type
     MONS_ENTROPY_WEAVER,
     MONS_MOON_TROLL,
     MONS_GRESSIL,
-
+    MONS_GRATON,
+    MONS_SABIN,
+    MONS_DEATHS_HAND,
 #endif
 
     NUM_MONSTERS,               // used for polymorph

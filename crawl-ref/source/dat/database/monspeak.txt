@@ -6102,7 +6102,7 @@ _Sabin_rare_
 @The_monster@ shouts @at_foe@, "You have activated my trap card!"
 
 w:1
-@The_monster@ says @to_foe@, "You have chances, my luck is UNBEATABLE!"
+@The_monster@ says @to_foe@, "You have no chances, my luck is UNBEATABLE!"
 
 @The_monster@ says @to_foe@, "Only way I could lose is drawing punishing card!"
 
@@ -6603,6 +6603,12 @@ VISUAL:@The_monster@ angrily waves @possessive@ antennae.
 default profane servitor
 
 __NONE
+%%%%
+################## Death's Hand ########################
+default deaths_hand
+
+VISUAL:@The_monster@'s black torch glows purple for a moment.
+VISUAL:Area around @The_monster@ dims momentarily.
 %%%%
 ################## Statues ##################
 default orange crystal statue

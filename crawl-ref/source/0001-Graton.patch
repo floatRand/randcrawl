@@ -1,0 +1,215 @@
+From 59ad697b85330ec856828c81ee86d9edb4877960 Mon Sep 17 00:00:00 2001
+From: SAS <->
+Date: Tue, 14 Apr 2015 13:36:41 +0300
+Subject: [PATCH] Graton
+
+---
+ crawl-ref/source/dat/database/monspeak.txt     |  37 +++++++++++++++++++++++++
+ crawl-ref/source/dat/des/builder/uniques.des   |   4 +++
+ crawl-ref/source/dat/descript/monsters.txt     |   5 ++++
+ crawl-ref/source/enum.h                        |   1 +
+ crawl-ref/source/mon-data.h                    |  12 ++++++++
+ crawl-ref/source/mon-spell.h                   |   9 ++++++
+ crawl-ref/source/rltiles/dc-mon.txt            |   1 +
+ crawl-ref/source/rltiles/mon/unique/graton.png | Bin 0 -> 1242 bytes
+ crawl-ref/source/tilepick.cc                   |   3 ++
+ 9 files changed, 72 insertions(+)
+ create mode 100644 crawl-ref/source/rltiles/mon/unique/graton.png
+
+diff --git a/crawl-ref/source/dat/database/monspeak.txt b/crawl-ref/source/dat/database/monspeak.txt
+index 5b3d6ab..6d193f8 100644
+--- a/crawl-ref/source/dat/database/monspeak.txt
++++ b/crawl-ref/source/dat/database/monspeak.txt
+@@ -3916,6 +3916,43 @@ SPELL:@The_monster@ calls on the powers of shadow!
+ @The_monster@ brags, "I can call spirits from the vasty deep."
+ ## END Eustachio ##
+ %%%%
++############ GRATON ### feeble ghoul earth elementalist, once powerful, but now rotten to the bone.
++Graton
++
++@_Graton_common_@
++
++w:5
++@_Graton_rare_@
++%%%%
++_Graton_common_
++
++@The_monster@ wails @at_foe@, "I am so hungry, so hungry, so sorry!"
++
++@The_monster@ pleads @at_foe@, "Please let me eat you, I don't want to rot to nothing!"
++
++@The_monster@ pleads @to_foe@, "Please, just a little bit!"
++
++@The_monster@ apologizes @to_foe@, "Sorry, but it's you or me."
++
++VISUAL:@The_monster@ flips a page on his book.
++
++@The_monster@ apologizes, "Sorry!"
++
++@The_monster@ asks, "Can't you spare me an arm?"
++
++@The_monster@ wails, "It is horrible!"
++%%%%
++_Graton_rare_
++
++@The_monster@ yells @at_foe@, "My flesh might be rotten, but my mind is still fresh!"
++
++VISUAL:@The_monster@ twiddles @possessive@ claws.
++
++SPELL:@The_monster@ channels power of earth!
++
++@The_monster@ apologizes profusely.
++## END Graton ##
++%%%%
+ ############ FRANCES ### A warrior who bested a Pandemonium Lord
+ Frances
+ 
+diff --git a/crawl-ref/source/dat/des/builder/uniques.des b/crawl-ref/source/dat/des/builder/uniques.des
+index 7286138..759a823 100644
+--- a/crawl-ref/source/dat/des/builder/uniques.des
++++ b/crawl-ref/source/dat/des/builder/uniques.des
+@@ -126,6 +126,10 @@ NAME:   uniq_eustachio
+ DEPTH:  D:4-6
+ : place_unique(_G, "Eustachio")
+ 
++NAME:   uniq_graton
++DEPTH:  D:9-12, Lair:2-5, Swamp:1
++: place_unique(_G, "Graton")
++
+ NAME:   uniq_frances
+ DEPTH:  D:12-14, Elf:1, Swamp:1-2, Snake:1-2, Shoals:1-2, Spider:1-2
+ : place_unique(_G, "Frances")
+diff --git a/crawl-ref/source/dat/descript/monsters.txt b/crawl-ref/source/dat/descript/monsters.txt
+index c941103..417923c 100644
+--- a/crawl-ref/source/dat/descript/monsters.txt
++++ b/crawl-ref/source/dat/descript/monsters.txt
+@@ -163,6 +163,11 @@ Eustachio
+ An apprentice summoner with a flowing moustache. He has funny ideas about
+ honour.
+ %%%%
++Graton
++
++A particularly intelligent ghoul, formerly a powerful earth elementalist. 
++His intense rotting has driven him desperate.
++%%%%
+ Fannar
+ 
+ A cold-hearted elven sorcerer, draped in robes of high office. He whispers
+diff --git a/crawl-ref/source/enum.h b/crawl-ref/source/enum.h
+index dd953fa..96c28c0 100644
+--- a/crawl-ref/source/enum.h
++++ b/crawl-ref/source/enum.h
+@@ -3142,6 +3142,7 @@ enum monster_type                      // menv[].type
+     MONS_ROXANNE,
+     MONS_SONJA,
+     MONS_EUSTACHIO,
++    MONS_GRATON,
+     MONS_AZRAEL,
+     MONS_ILSUIW,
+     MONS_PRINCE_RIBBIT,
+diff --git a/crawl-ref/source/mon-data.h b/crawl-ref/source/mon-data.h
+index ee2ca38..2b62af2 100644
+--- a/crawl-ref/source/mon-data.h
++++ b/crawl-ref/source/mon-data.h
+@@ -6768,6 +6768,18 @@ DUMMY(MONS_GOLEM, '8', LIGHTGREY, "golem")
+ },
+ 
+ {
++    MONS_GRATON, 'n', BLUE, "Graton",
++    M_UNIQUE | M_SPEAKS | M_MALE | M_NO_ZOMBIE,
++    MR_RES_COLD,
++    550, 15, MONS_GHOUL, MONS_GHOUL, MH_UNDEAD, 66,
++    { {AT_HIT, AF_ROT, 18}, AT_NO_ATK, AT_NO_ATK, AT_NO_ATK },
++    { 8, 0, 0, 68 },
++    4, 15, MST_GRATON, CE_ROT, S_MOAN,
++    I_HIGH, HT_LAND, FL_NONE, 10, DEFAULT_ENERGY,
++    MONUSE_OPEN_DOORS, MONEAT_CORPSES, SIZE_MEDIUM, MON_SHAPE_HUMANOID
++},
++
++{
+     MONS_MAURICE, '@', GREEN, "Maurice",
+     M_UNIQUE | M_WARM_BLOOD | M_SPEAKS | M_MALE,
+     MR_NO_FLAGS,
+diff --git a/crawl-ref/source/mon-spell.h b/crawl-ref/source/mon-spell.h
+index 7e8bd83..e47e66f 100644
+--- a/crawl-ref/source/mon-spell.h
++++ b/crawl-ref/source/mon-spell.h
+@@ -812,6 +812,15 @@ static const mon_spellbook mspell_list[] =
+       }
+     },
+ 
++    { MST_GRATON,
++      {
++       { SPELL_MIGHT, 16, MON_SPELL_WIZARD },
++       { SPELL_LRD, 22, MON_SPELL_WIZARD },
++       { SPELL_STONE_ARROW, 22, MON_SPELL_WIZARD },
++       { SPELL_SLOW, 16, MON_SPELL_WIZARD },
++      }
++    },
++
+     { MST_ILSUIW,
+       {
+        { SPELL_THROW_ICICLE, 11, MON_SPELL_WIZARD },
+diff --git a/crawl-ref/source/rltiles/dc-mon.txt b/crawl-ref/source/rltiles/dc-mon.txt
+index e5da4ee..5c78816 100644
+--- a/crawl-ref/source/rltiles/dc-mon.txt
++++ b/crawl-ref/source/rltiles/dc-mon.txt
+@@ -974,6 +974,7 @@ ghoul MONS_GHOUL
+ 
+ %sdir mon/unique
+ blork_the_orc MONS_BLORK_THE_ORC
++graton MONS_GRATON
+ %rim 0
+ urug MONS_URUG
+ nergalle MONS_NERGALLE
+diff --git a/crawl-ref/source/rltiles/mon/unique/graton.png b/crawl-ref/source/rltiles/mon/unique/graton.png
+new file mode 100644
+index 0000000000000000000000000000000000000000..5f974a50e443df110e2e0f99f59509e3b27bb7c3
+GIT binary patch
+literal 1242
+zcmV<01SR{4P)<h;3K|Lk000e1NJLTq001BW001Be1^@s6b9#F800006VoOIv07?LD
+z0Aqi&lLi0)010qNS#tmY3ljhU3ljkVnw%H_000McNliru-vkX73I-!_=sExZ03B&m
+zSad^gZEa<4bN~PV002XBWnpw>WFU8GbZ8()Nlj2>E@cM*00cfsL_t(o!^M|fOq*pC
+z$A2Z5f?cObSJ>843hNeUu@=H8OE7{a3oK0C;s<^#F=Q^pOp?aM3#S(gdSMJ1*%H)c
+z^J-!;N3svl#f_M-CFtV1jIsqfKxkdpuB45%&R&?;i}60`7wy}DdT!pY^F06mbI$)f
+z&w1g0HdP+JQiie8a_3d*C^>tan5r$zO?xm^Tj=iS0-$YQCji%nF0#7xF>YMBy5a;R
+zXOA=OrA$Km$Z7yK)Y*tfV|f!OQ0i!^wqUBZi02EZhgU=ciV1wXXFmX+yw?kW#cE0O
+z$#?aNQ}Cw*`#*dKb&;C*Uvbn$YCLWaXTLcMfW4&&*T`tz;EE&gunN>gYI+a!a`e-q
+zc-$Ut&)mk|(nQap&;Rulr~r-}JVM=;I%=M(;r!rv)>W+&4)JIVU74ONWw|T@l3Z#p
+zzP1P3RvX)PZevaPnk1)UjfU2~-7*PDDVYK#;QomzHrTAx*{qCRzJ|5VitD<ET{~Xq
+z>l0rRT?k|CZlbHcgU`O|qqT20=EpZFiij!~_^)Fw0HO<F0QSE7KBvx{$Ot|)ImN}_
+zf5CIf&EM`Avo|NRVMu@~D}lwliV({-KRrY3vriL`#xT8MO#=tmSZ?R$g-f|eP?&4?
+zi-aPa890Y`W)@wUo-Hr8^Zk#PiAQ6owHp5TV37Wg?+;1@_fJeIIagF!H4q6!IDY6j
+zp+FEo6$%9LPfYQ4=bHem`q_nJlaX7qw*+`%WdNC~L$bFtWfh_1>~RY4#qfy`dM75)
+zRT_jQiXSTEh0!oij`;!DVS9$aPuJvK5ddSASyad7`r6znSat3PB98hcHQ}9@6ffPs
+zg#f7B+W}t;5Lq9=w$%o}+?+R+1Zu4&cNzK|^+Zm6mzJ|)jfP^427QHrVvPpvTd#08
+z9OZ5}N+cBF(Os=+b0vybTUx@}CpIQ++nLlUedMSSD;xCsY1`My_|S-$q|#w$d}su1
+zX$b(qdEfmL(_|Er$g7tL)NF47VEFK{B;2K{fI+Wc+{=oV!4vleU8Mnig@NF_FDc}i
+zz~ymD$}p+za*d2)tTGF5S%9+I69otGlA)ZFzB?GJ%+zde$q1ZH1FC~#<Lor91&|i6
+zXiH0yYWrR+#=Tf9iHxl9lfFCRK9O*yeqqT7Sl8>4QlZvrh(}{0--$$08WN0EW&s*q
+z2n(&`eHNtnNSo_x3C{ayY;KU75tXh?pLF2pD-21KB$i#KrllZ9{*#<#@I(s*f~rs;
+zNMmyYp+Jz}ypJ1Ku2Si+3vk!S=#m{%A$eG1a|0Hu1&`a4_U*an+W<slh7TW;ltj89
+z4}6u}1E!{`Z=he0Xn(a`9JQIExEunaJx?Xp-O<I|v}eg~Ih*B^0;zAHUjU_&=snOY
+zDHQhu5fEX{l>Z0#&s01}0_403lZEzQ{vAszvD!@b58qG5rfxiQ{r~^~07*qoM6N<$
+Ef=+BWh5!Hn
+
+literal 0
+HcmV?d00001
+
+diff --git a/crawl-ref/source/tilepick.cc b/crawl-ref/source/tilepick.cc
+index 063a6bc..9d0d4ee 100644
+--- a/crawl-ref/source/tilepick.cc
++++ b/crawl-ref/source/tilepick.cc
+@@ -2196,6 +2196,9 @@ tileidx_t tileidx_monster_base(int type, bool in_water, int colour, int number,
+     // statue ('8')
+     case MONS_ROXANNE:
+         return TILEP_MONS_ROXANNE;
++    // ghoul ('n')
++    case MONS_GRATON:
++        return TILEP_MONS_GRATON;
+ 
+     // -------------------------------------
+     // non-human uniques ('@')
+-- 
+2.1.0
+

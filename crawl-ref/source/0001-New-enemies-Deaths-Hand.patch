@@ -1,0 +1,708 @@
+From e85e77826624a542580acd341155da3d668e22ee Mon Sep 17 00:00:00 2001
+From: SAS <->
+Date: Thu, 16 Apr 2015 01:50:10 +0300
+Subject: [PATCH] New enemies: Deaths Hand
+
+---
+ crawl-ref/source/actor.h                           |   4 ++
+ crawl-ref/source/areas.cc                          |  45 ++++++++++++++++++++-
+ crawl-ref/source/areas.h                           |   3 ++
+ crawl-ref/source/dat/descript/monsters.txt         |   7 ++++
+ crawl-ref/source/decks.cc                          |   1 -
+ crawl-ref/source/directn.cc                        |   8 ++++
+ crawl-ref/source/enum.h                            |   1 +
+ crawl-ref/source/map_knowledge.h                   |   1 +
+ crawl-ref/source/mon-act.cc                        |   3 +-
+ crawl-ref/source/mon-cast.cc                       |   1 +
+ crawl-ref/source/mon-data.h                        |  13 ++++++
+ crawl-ref/source/mon-death.cc                      |   3 +-
+ crawl-ref/source/mon-info.cc                       |   2 +
+ crawl-ref/source/mon-info.h                        |   1 +
+ crawl-ref/source/mon-spell.h                       |  10 +++++
+ crawl-ref/source/monster.cc                        |   7 +++-
+ crawl-ref/source/monster.h                         |   2 +
+ crawl-ref/source/player.cc                         |  11 +++++
+ crawl-ref/source/player.h                          |   2 +
+ crawl-ref/source/religion.cc                       |   5 ++-
+ crawl-ref/source/rltiles/dc-feat.txt               |   1 +
+ crawl-ref/source/rltiles/dc-mon.txt                |   1 +
+ .../source/rltiles/mon/undead/deaths_hand.png      | Bin 0 -> 1218 bytes
+ crawl-ref/source/show.cc                           |   3 ++
+ crawl-ref/source/showsymb.cc                       |   4 ++
+ crawl-ref/source/status.cc                         |   8 ++++
+ crawl-ref/source/status.h                          |   1 +
+ crawl-ref/source/tilecell.cc                       |   2 +
+ crawl-ref/source/tilecell.h                        |   7 +++-
+ crawl-ref/source/tiledgnbuf.cc                     |   3 +-
+ crawl-ref/source/tilepick.cc                       |   3 +-
+ crawl-ref/source/tileview.cc                       |   3 ++
+ 32 files changed, 155 insertions(+), 11 deletions(-)
+ create mode 100644 crawl-ref/source/rltiles/mon/undead/deaths_hand.png
+
+diff --git a/crawl-ref/source/actor.h b/crawl-ref/source/actor.h
+index 2fc4c34..09d72f6 100644
+--- a/crawl-ref/source/actor.h
++++ b/crawl-ref/source/actor.h
+@@ -356,10 +356,13 @@ public:
+     //            purpose)
+     virtual bool backlit(bool self_halo = true) const = 0;
+     virtual bool umbra() const = 0;
++    virtual bool unholyaura() const = 0;
+     // Within any actor's halo?
+     virtual bool haloed() const;
+     // Within an umbra?
+     virtual bool umbraed() const;
++    // wreathed by unholy aura?
++    virtual bool unholied() const;
+ #if TAG_MAJOR_VERSION == 34
+     // Being heated by a heat aura?
+     virtual bool heated() const;
+@@ -371,6 +374,7 @@ public:
+     // Squared liquefying radius
+     virtual int liquefying_radius2() const = 0;
+     virtual int umbra_radius2() const = 0;
++    virtual int unholy_radius2() const = 0;
+ #if TAG_MAJOR_VERSION == 34
+     virtual int heat_radius2() const = 0;
+ #endif
+diff --git a/crawl-ref/source/areas.cc b/crawl-ref/source/areas.cc
+index 0662533..81ed043 100644
+--- a/crawl-ref/source/areas.cc
++++ b/crawl-ref/source/areas.cc
+@@ -42,6 +42,7 @@ enum areaprop_flag
+ #if TAG_MAJOR_VERSION == 34
+     APROP_HOT           = (1 << 11),
+ #endif
++    APROP_UNHOLY        = (1 << 12),
+ };
+ 
+ struct area_centre
+@@ -84,6 +85,7 @@ void areas_actor_moved(const actor* act, const coord_def& oldpos)
+         (you.entering_level
+          || act->halo_radius2() > -1 || act->silence_radius2() > -1
+          || act->liquefying_radius2() > -1 || act->umbra_radius2() > -1
++         || act->unholy_radius2() > -1
+ #if TAG_MAJOR_VERSION == 34
+          || act->heat_radius2() > -1
+ #endif
+@@ -152,6 +154,15 @@ static void _actor_areas(actor *a)
+     }
+ #endif
+ 
++    if ((r = a->unholy_radius2()) >= 0)
++    {
++        _agrid_centres.emplace_back(AREA_UMBRA, a->pos(), r);
++
++        for (radius_iterator ri(a->pos(), r, C_CIRCLE, LOS_DEFAULT); ri; ++ri)
++            _set_agrid_flag(*ri, APROP_UNHOLY);
++        no_areas = false;
++    }
++
+     // XXX: make this a proper function
+     if (a->type == MONS_SINGULARITY)
+     {
+@@ -257,7 +268,8 @@ static area_centre_type _get_first_area(const coord_def& f)
+     // the second.
+     if (a & APROP_LIQUID)
+         return AREA_LIQUID;
+-
++    if (a & APROP_UNHOLY )
++        return AREA_UNHOLY;
+     return AREA_NONE;
+ }
+ 
+@@ -769,7 +781,38 @@ int player::heat_radius2() const
+ 
+     return 2; // Surrounds you to radius of 1.
+ }
++///////////////////////////////////////
++bool unholy_haloed(const coord_def& p)
++{
++    if (!map_bounds(p))
++        return false;
++    if (!_agrid_valid)
++        _update_agrid();
++
++    return _check_agrid_flag(p, APROP_UNHOLY);
++}
+ 
++bool actor::unholied() const
++{
++     return ::unholy_haloed(pos());
++}
++/////////////////////////////////////
++int player::unholy_radius2() const
++{
++        //no... not yet
++        return -1;
++}
++////////////////////////////////////
++int monster::unholy_radius2() const
++{
++    switch (type)
++    {
++    case MONS_DEATHS_HAND:
++        return 40; // Very unholy!
++    default:
++        return -1;
++    }
++}
+ // Stub for monster radius
+ int monster::heat_radius2() const
+ {
+diff --git a/crawl-ref/source/areas.h b/crawl-ref/source/areas.h
+index 522a602..d15b747 100644
+--- a/crawl-ref/source/areas.h
++++ b/crawl-ref/source/areas.h
+@@ -12,6 +12,7 @@ enum area_centre_type
+     AREA_UMBRA,
+     AREA_QUAD,
+     AREA_DISJUNCTION,
++    AREA_UNHOLY,
+ #if TAG_MAJOR_VERSION == 34
+     AREA_HOT,
+ #endif
+@@ -48,6 +49,8 @@ bool disjunction_haloed(const coord_def& p);
+ // ...or endarkened by an umbra?
+ bool umbraed(const coord_def& p);
+ 
++bool unholy_haloed(const coord_def& p);
++
+ #if TAG_MAJOR_VERSION == 34
+ // ...or is the area hot?
+ bool heated(const coord_def& p);
+diff --git a/crawl-ref/source/dat/descript/monsters.txt b/crawl-ref/source/dat/descript/monsters.txt
+index 2757bb8..e22b24f 100644
+--- a/crawl-ref/source/dat/descript/monsters.txt
++++ b/crawl-ref/source/dat/descript/monsters.txt
+@@ -837,6 +837,13 @@ curse toe
+ A disembodied toe, hanging in the air and radiating an intense field of
+ negative energy.
+ %%%%
++death's hand
++
++A gaunt figure cloaked in darkness, carriers of the black torch.
++They are gentle caretakers of the undead, but lash out at anything
++living or anything that could be threat to their undead. They are shrouded
++by an aura that heals their nearby allies at rapid rate.
++%%%%
+ cyclops
+ 
+ A giant with one eye in the centre of its forehead. Despite their lack of
+diff --git a/crawl-ref/source/decks.cc b/crawl-ref/source/decks.cc
+index e7cab3b..8028107 100644
+--- a/crawl-ref/source/decks.cc
++++ b/crawl-ref/source/decks.cc
+@@ -69,7 +69,6 @@
+ #include "uncancel.h"
+ #include "view.h"
+ #include "xom.h"
+-
+ // For information on deck structure, reference the comment near the beginning
+ 
+ #define STACKED_KEY "stacked"
+diff --git a/crawl-ref/source/directn.cc b/crawl-ref/source/directn.cc
+index 3a6ab0b..816b14f 100644
+--- a/crawl-ref/source/directn.cc
++++ b/crawl-ref/source/directn.cc
+@@ -3254,6 +3254,9 @@ static vector<string> _get_monster_desc_vector(const monster_info& mi)
+     if (mi.is(MB_UMBRAED))
+         descs.emplace_back("umbra");
+ 
++   if (mi.is(MB_UNHOLIED))
++        descs.emplace_back("unholied");
++
+     if (mi.is(MB_POSSESSABLE))
+         descs.emplace_back("possessable"); // FIXME: better adjective
+     else if (mi.is(MB_ENSLAVED))
+@@ -3328,6 +3331,9 @@ static string _get_monster_desc(const monster_info& mi)
+     if (mi.is(MB_UMBRAED))
+         text += pronoun + " is wreathed by an umbra.\n";
+ 
++    if (mi.is(MB_UNHOLIED))
++        text += pronoun + " is wreathed by an unholy aura.\n";
++
+     if (mi.intel() <= I_INSECT)
+         text += pronoun + " is mindless.\n";
+ 
+@@ -3562,6 +3568,8 @@ static bool _print_cloud_desc(const coord_def where)
+         areas.emplace_back("is lit by a halo");
+     if (umbraed(where) && !haloed(where))
+         areas.emplace_back("is wreathed by an umbra");
++    if (unholy_haloed(where))
++        areas.emplace_back("is wreathed by unholy aura");
+     if (liquefied(where))
+         areas.emplace_back("is liquefied");
+     if (orb_haloed(where) || quad_haloed(where))
+diff --git a/crawl-ref/source/enum.h b/crawl-ref/source/enum.h
+index fa85f69..62cb892 100644
+--- a/crawl-ref/source/enum.h
++++ b/crawl-ref/source/enum.h
+@@ -3057,6 +3057,7 @@ enum monster_type                      // menv[].type
+     MONS_DEATH_COB,
+     MONS_CURSE_TOE,
+     MONS_CURSE_SKULL,
++    MONS_DEATHS_HAND,
+     MONS_PROFANE_SERVITOR,
+ #if TAG_MAJOR_VERSION > 34
+     MONS_ANCIENT_CHAMPION,
+diff --git a/crawl-ref/source/map_knowledge.h b/crawl-ref/source/map_knowledge.h
+index 7412a4b..ed01260 100644
+--- a/crawl-ref/source/map_knowledge.h
++++ b/crawl-ref/source/map_knowledge.h
+@@ -51,6 +51,7 @@ struct cloud_info
+ #define MAP_LIQUEFIED       0x400000
+ #define MAP_ORB_HALOED      0x800000
+ #define MAP_UMBRAED        0x1000000
++#define MAP_UNHOLIED       0x10000000 // using hot for now!
+ #define MAP_QUAD_HALOED    0X4000000
+ #define MAP_DISJUNCT       0X8000000
+ #if TAG_MAJOR_VERSION == 34
+diff --git a/crawl-ref/source/mon-act.cc b/crawl-ref/source/mon-act.cc
+index 289e14e..8788e17 100644
+--- a/crawl-ref/source/mon-act.cc
++++ b/crawl-ref/source/mon-act.cc
+@@ -136,7 +136,7 @@ static void _monster_regenerate(monster* mons)
+         return;
+ 
+     if (mons->has_ench(ENCH_SICK) || mons->has_ench(ENCH_DEATHS_DOOR) ||
+-        (!mons_can_regenerate(mons) && !(mons->has_ench(ENCH_REGENERATION))))
++        (!mons_can_regenerate(mons) && !(mons->has_ench(ENCH_REGENERATION) && !( mons->holiness()==MH_UNDEAD && mons->unholied() ))))
+     {
+         return;
+     }
+@@ -150,6 +150,7 @@ static void _monster_regenerate(monster* mons)
+ 
+     if (mons_class_fast_regen(mons->type)
+         || mons->has_ench(ENCH_REGENERATION)
++        || ( mons->unholied() && mons->holiness()==MH_UNDEAD )
+         || mons->has_ench(ENCH_WITHDRAWN)
+         || _mons_natural_regen_roll(mons))
+     {
+diff --git a/crawl-ref/source/mon-cast.cc b/crawl-ref/source/mon-cast.cc
+index d683ff2..daa1334 100644
+--- a/crawl-ref/source/mon-cast.cc
++++ b/crawl-ref/source/mon-cast.cc
+@@ -3995,6 +3995,7 @@ static bool _mons_will_abjure(monster* mons, spell_type spell)
+     {
+         return true;
+     }
++    else if(mons->has_spell(SPELL_ABJURATION)) return true;
+ 
+     return false;
+ }
+diff --git a/crawl-ref/source/mon-data.h b/crawl-ref/source/mon-data.h
+index fadabd6..2326355 100644
+--- a/crawl-ref/source/mon-data.h
++++ b/crawl-ref/source/mon-data.h
+@@ -2549,6 +2549,19 @@ DUMMY(MONS_MOTH, 'y', WHITE, "moth")
+     MONUSE_NOTHING, MONEAT_NOTHING, SIZE_TINY, MON_SHAPE_MISC
+ },
+ 
++{
++    MONS_DEATHS_HAND, 'L', MAGENTA, "death's hand",
++    M_SEE_INVIS,
++    mrd(MR_RES_FIRE | MR_RES_COLD, 2) | MR_RES_ELEC,
++    550, 10, MONS_LICH, MONS_PROFANE_SERVITOR, MH_NONLIVING, 180,
++    { {AT_HIT, AF_DRAIN_XP, 35}, AT_NO_ATK, AT_NO_ATK, AT_NO_ATK },
++    { 23, 0, 0, 180 },
++    18, 12, MST_DEATHS_HAND, CE_NOCORPSE, S_SILENT,
++    I_HIGH, HT_LAND, FL_NONE, 10, DEFAULT_ENERGY,
++    MONUSE_NOTHING, MONEAT_NOTHING, SIZE_MEDIUM, MON_SHAPE_HUMANOID
++},
++
++
+ // angelic beings ('A')
+ {
+     MONS_ANGEL, 'A', WHITE, "angel",
+diff --git a/crawl-ref/source/mon-death.cc b/crawl-ref/source/mon-death.cc
+index b3b4c10..561b342 100644
+--- a/crawl-ref/source/mon-death.cc
++++ b/crawl-ref/source/mon-death.cc
+@@ -2630,7 +2630,8 @@ int monster_die(monster* mons, killer_type killer,
+     // Monsters haloes should be removed when they die.
+     if (mons->halo_radius2()
+         || mons->umbra_radius2()
+-        || mons->silence_radius2())
++        || mons->silence_radius2()
++        || mons->unholy_radius2())
+     {
+         invalidate_agrid();
+     }
+diff --git a/crawl-ref/source/mon-info.cc b/crawl-ref/source/mon-info.cc
+index d5ce149..c88385e 100644
+--- a/crawl-ref/source/mon-info.cc
++++ b/crawl-ref/source/mon-info.cc
+@@ -613,6 +613,8 @@ monster_info::monster_info(const monster* m, int milev)
+         mb.set(MB_HALOED);
+     if (!m->haloed() && m->umbraed())
+         mb.set(MB_UMBRAED);
++    if( m->unholied())
++        mb.set(MB_UNHOLIED);
+     if (mons_looks_stabbable(m))
+         mb.set(MB_STABBABLE);
+     if (mons_looks_distracted(m))
+diff --git a/crawl-ref/source/mon-info.h b/crawl-ref/source/mon-info.h
+index dcfcc15..420dae9 100644
+--- a/crawl-ref/source/mon-info.h
++++ b/crawl-ref/source/mon-info.h
+@@ -81,6 +81,7 @@ enum monster_info_flags
+     MB_PERM_SUMMON,
+     MB_INNER_FLAME,
+     MB_UMBRAED,
++    MB_UNHOLIED,
+     MB_ROUSED,
+     MB_BREATH_WEAPON,
+     MB_DEATHS_DOOR,
+diff --git a/crawl-ref/source/mon-spell.h b/crawl-ref/source/mon-spell.h
+index 0d18820..02fa545 100644
+--- a/crawl-ref/source/mon-spell.h
++++ b/crawl-ref/source/mon-spell.h
+@@ -540,6 +540,16 @@ static const mon_spellbook mspell_list[] =
+       }
+     },
+ 
++    {  MST_DEATHS_HAND,
++      {
++       { SPELL_MALIGN_OFFERING, 20, MON_SPELL_MAGICAL },
++       { SPELL_DISPEL_UNDEAD, 20, MON_SPELL_MAGICAL },
++       { SPELL_MIGHT_OTHER, 20, MON_SPELL_MAGICAL  },
++       { SPELL_CALL_LOST_SOUL, 8, MON_SPELL_MAGICAL  },
++       { SPELL_BLINK_ALLIES_ENCIRCLE, 20, MON_SPELL_MAGICAL },
++      }
++    },
++
+     {  MST_SHINING_EYE,
+       {
+        { SPELL_MALMUTATE, 57, MON_SPELL_MAGICAL },
+diff --git a/crawl-ref/source/monster.cc b/crawl-ref/source/monster.cc
+index 6ebba2f..f628c60 100644
+--- a/crawl-ref/source/monster.cc
++++ b/crawl-ref/source/monster.cc
+@@ -3153,7 +3153,7 @@ bool monster::backlit(bool self_halo) const
+         return true;
+     }
+ 
+-    return !umbraed() && haloed() && (self_halo || halo_radius2() == -1);
++    return ( !umbraed() ) && haloed() && (self_halo || halo_radius2() == -1);
+ }
+ 
+ bool monster::umbra() const
+@@ -3161,6 +3161,11 @@ bool monster::umbra() const
+     return umbraed() && !haloed();
+ }
+ 
++bool monster::unholyaura() const
++{
++    return unholied();
++}
++
+ bool monster::glows_naturally() const
+ {
+     return mons_class_flag(type, M_GLOWS_LIGHT)
+diff --git a/crawl-ref/source/monster.h b/crawl-ref/source/monster.h
+index 967e39e..c5f0935 100644
+--- a/crawl-ref/source/monster.h
++++ b/crawl-ref/source/monster.h
+@@ -416,10 +416,12 @@ public:
+     bool asleep() const;
+     bool backlit(bool self_halo = true) const;
+     bool umbra() const;
++    bool unholyaura() const;
+     int halo_radius2() const;
+     int silence_radius2() const;
+     int liquefying_radius2() const;
+     int umbra_radius2() const;
++    int unholy_radius2() const;
+ #if TAG_MAJOR_VERSION == 34
+     int heat_radius2() const;
+ #endif
+diff --git a/crawl-ref/source/player.cc b/crawl-ref/source/player.cc
+index 39cdfc8..2a23ab1 100644
+--- a/crawl-ref/source/player.cc
++++ b/crawl-ref/source/player.cc
+@@ -1113,6 +1113,11 @@ static int _player_bonus_regen()
+         rr += 100;
+     }
+ 
++    if(you.unholied() && you.undead_state()
++       && !(you.duration[DUR_REGENERATION] || you.duration[DUR_TROGS_HAND])){
++        rr += 100;
++    }
++
+     // Jewellery.
+     rr += REGEN_PIP * you.wearing(EQ_AMULET, AMU_REGENERATION);
+ 
+@@ -7291,6 +7296,12 @@ bool player::umbra() const
+     return !backlit() && umbraed() && !haloed();
+ }
+ 
++bool player::unholyaura() const
++{
++    return unholied();
++}
++
++
+ bool player::glows_naturally() const
+ {
+     return false;
+diff --git a/crawl-ref/source/player.h b/crawl-ref/source/player.h
+index 376b72d..c049199 100644
+--- a/crawl-ref/source/player.h
++++ b/crawl-ref/source/player.h
+@@ -726,9 +726,11 @@ public:
+     bool caught() const;
+     bool backlit(bool self_halo = true) const;
+     bool umbra() const;
++    bool unholyaura() const;
+     int halo_radius2() const;
+     int silence_radius2() const;
+     int liquefying_radius2() const;
++    int unholy_radius2() const;
+     int umbra_radius2() const;
+ #if TAG_MAJOR_VERSION == 34
+     int heat_radius2() const;
+diff --git a/crawl-ref/source/religion.cc b/crawl-ref/source/religion.cc
+index cdb7fdf..72018a1 100644
+--- a/crawl-ref/source/religion.cc
++++ b/crawl-ref/source/religion.cc
+@@ -1348,7 +1348,7 @@ static monster_type _yred_servants[] =
+     MONS_MUMMY, MONS_WIGHT, MONS_FLYING_SKULL, MONS_WRAITH,
+     MONS_VAMPIRE, MONS_PHANTASMAL_WARRIOR, MONS_SKELETAL_WARRIOR,
+     MONS_FLAYED_GHOST, MONS_DEATH_COB, MONS_GHOUL, MONS_BONE_DRAGON,
+-    MONS_PROFANE_SERVITOR
++    MONS_PROFANE_SERVITOR, MONS_DEATHS_HAND
+ };
+ 
+ #define MIN_YRED_SERVANT_THRESHOLD 3
+@@ -1357,7 +1357,8 @@ static monster_type _yred_servants[] =
+ static bool _yred_high_level_servant(monster_type type)
+ {
+     return type == MONS_BONE_DRAGON
+-           || type == MONS_PROFANE_SERVITOR;
++           || type == MONS_PROFANE_SERVITOR
++             || type == MONS_DEATHS_HAND;
+ }
+ 
+ int yred_random_servants(unsigned int threshold, bool force_hostile)
+diff --git a/crawl-ref/source/rltiles/dc-feat.txt b/crawl-ref/source/rltiles/dc-feat.txt
+index 2a0f942..d347e3a 100644
+--- a/crawl-ref/source/rltiles/dc-feat.txt
++++ b/crawl-ref/source/rltiles/dc-feat.txt
+@@ -604,6 +604,7 @@ effect/umbra0 UMBRA
+ effect/umbra1
+ effect/umbra2
+ effect/umbra3
++effect/unholied UNHOLIED
+ effect/orb_glow0 ORB_GLOW
+ effect/orb_glow1
+ effect/quad_glow QUAD_GLOW
+diff --git a/crawl-ref/source/rltiles/dc-mon.txt b/crawl-ref/source/rltiles/dc-mon.txt
+index da0a368..299ac7e 100644
+--- a/crawl-ref/source/rltiles/dc-mon.txt
++++ b/crawl-ref/source/rltiles/dc-mon.txt
+@@ -1030,6 +1030,7 @@ ancient_champion MONS_ANCIENT_CHAMPION
+ curse_skull MONS_CURSE_SKULL
+ %rim 0
+ curse_toe MONS_CURSE_TOE
++deaths_hand MONS_DEATHS_HAND
+ %rim 1
+ flying_skull MONS_FLYING_SKULL
+ crawling_corpse MONS_CRAWLING_CORPSE
+diff --git a/crawl-ref/source/rltiles/mon/undead/deaths_hand.png b/crawl-ref/source/rltiles/mon/undead/deaths_hand.png
+new file mode 100644
+index 0000000000000000000000000000000000000000..8cd9706c27548400f041627f5889c99e2b7cf102
+GIT binary patch
+literal 1218
+zcmV;z1U>tSP)<h;3K|Lk000e1NJLTq001BW001Be1^@s6b9#F800006VoOIv0RI60
+z0RN!9r;`8x010qNS#tmY3labT3lag+-G2N4000McNliru-vkd812+pIC7S>M1W!ps
+zK~z}7otDo_TvrswKX(uvUoDeN7@SAq6p3~kWgvngp~8S51Q$YfU9>w9_adZ!fs3rN
+zs$|<BT`6=C3W3l8MT!BT5~-~r#2?IrhoeLEIlAz4Vea+5H@_S&T;{wx_ucRJobx^B
+zT_qwk8uJm%rWILYmn{IgNCWVzJW<?msA>dkKn)5Q;5GgLV2H;R@BS%I)r|?vN084_
+z<ZBf-pf+%hpQ|3?kTtd@bzLHcfc9DgFY??RSPQrsks%(_MVei<_(45o`T_;;lUg#K
+z+9_+%hW6YB_sNkXckOWc<XHP+cadgAmiSF=iGJQ?i!Rd4M-WX+iHHgP-{e^2Ierb$
+zfB2s7STVo#QlX=#g=%~LOce!SR^lq6|J2?G4j34tGm$dS8nha?jzCxoT0?f&XC-dz
+z2*C6O>a!H99-6wBzIF<<2Ex@*O^~w^SI<;Y5V@MaD3Kpo6o;$;0!U{fWo&zn4^GK&
+z?}T}F$cjT&vdl@AIkC^JH(P90(-$ZrPXvLN<QN(l1K^Xl!_4Fy0L!^m?!=OO+~1~H
+z@)#eS;?>(1_~a0grW;aActMkRDX_Nw+Gs!n0|p%6!NYFWH#3(tt(1s}Qc4MMEkZ4g
+zx}Y8-*+*ZjZWb0602t_d#By$x)ZK1&_CF9MiBd{jCrGI2R;*vvwjF+eJFz4W9(J>w
+zTjlup*hJ&d_qgpO%o%xqqw3i<scR7!?w#PkyR4G7_Ex^R+rvSrVAf8~OBDp-u`43)
+z@^7kwS51Mv(I%lmAjZGjn}pX7eJ|j3-mmX@pbylFfNn$wUXia_V+PQkhrY+5?@^|}
+zeYcM&N&4N<n&3()u^nreg3d&Wl6T&)oXQjo@VopQq9nQR_En@H9EnJy{HN}vDN~?K
+zp#spJ{qCp{qyGPWev|k4%|Jvd(h%-UfXqzJ1-f38q|8jtNtC2nbDd0u?K&A5ADj}`
+z$w<FDYTniJ5-x~WkpiWZ4EIg|@YjF86Xmk`+;$SgV+qbq&)GZLrc8mJTO+i!w^A&5
+z#A68)>L^LGzg`8@72(eQ2NOy?&Q60`I5{twHQknbZjDf;z@hI^EP3?1qb3DffOd*o
+z8kOJBz!+=muZhR{I6FP3t-TeFt{RO?hIlMNvE=b_e><RoL#q^BCu6Fmp$PTpOr+S^
+z+p6&Rwv#Za$@?3DD16(~XFM)bAn$JkN;RB@NTXI69(zaI6>BHwB?kH~zZI|EzM!L{
+zBcOa;DNSjhnUVK5Sl_(-C~5tKNz`&GQm++%@^&ivxfYn623xqpy%Xg94MRfjv2}Ih
+z2<U!aD++e?Xc9Kja0S$D#no6xNt&|MwXVfwt34h|(9zLh`iS0Vm$mseG($jNH1hsN
+zApBth_UG7cMB#TtMAf`3+Lu!OY`0?D4o}y~m|1I2%~q^E*LOi%h;|C9HLYe#`r0?5
+gYC!eCo4FnT4_W&F&Jp+)@c;k-07*qoM6N<$f;&V$=>Px#
+
+literal 0
+HcmV?d00001
+
+diff --git a/crawl-ref/source/show.cc b/crawl-ref/source/show.cc
+index 28654c2..1be0d10 100644
+--- a/crawl-ref/source/show.cc
++++ b/crawl-ref/source/show.cc
+@@ -124,6 +124,9 @@ static void _update_feat_at(const coord_def &gp)
+     if (umbraed(gp))
+         env.map_knowledge(gp).flags |= MAP_UMBRAED;
+ 
++    if (unholy_haloed(gp))
++        env.map_knowledge(gp).flags |= MAP_UNHOLIED;
++
+     if (silenced(gp))
+         env.map_knowledge(gp).flags |= MAP_SILENCED;
+ 
+diff --git a/crawl-ref/source/showsymb.cc b/crawl-ref/source/showsymb.cc
+index c8865eb..8e71203 100644
+--- a/crawl-ref/source/showsymb.cc
++++ b/crawl-ref/source/showsymb.cc
+@@ -126,6 +126,10 @@ static unsigned short _cell_feat_show_colour(const map_cell& cell,
+             else
+                 colour = MAGENTA; // If no holy or silence
+         }
++        else if (cell.flags & MAP_UNHOLIED){
++                if (cell.flags & MAP_SILENCED) colour = DARKGRAY;
++                else colour = BLACK;
++        }
+         else if (cell.flags & MAP_SILENCED)
+             colour = CYAN; // Silence but no holy/unholy
+         else if (cell.flags & MAP_ORB_HALOED)
+diff --git a/crawl-ref/source/status.cc b/crawl-ref/source/status.cc
+index 26d35c6..24b8e04 100644
+--- a/crawl-ref/source/status.cc
++++ b/crawl-ref/source/status.cc
+@@ -233,6 +233,14 @@ bool fill_status_info(int status, status_info* inf)
+         }
+         break;
+ 
++    case STATUS_UNHOLIED:
++        if (you.umbra())
++        {
++            inf->short_text   = "wreathed by unholy field of energy";
++            inf->long_text    = "You are wreathed by an unholy field of energy.";
++        }
++    break;
++
+     case STATUS_NET:
+         if (you.attribute[ATTR_HELD])
+         {
+diff --git a/crawl-ref/source/status.h b/crawl-ref/source/status.h
+index d25fb01..8d624ab 100644
+--- a/crawl-ref/source/status.h
++++ b/crawl-ref/source/status.h
+@@ -24,6 +24,7 @@ enum status_type
+     STATUS_FIREBALL,
+     STATUS_BACKLIT,
+     STATUS_UMBRA,
++    STATUS_UNHOLIED,
+     STATUS_CONSTRICTED,
+     STATUS_MANUAL,
+     STATUS_AUGMENTED,
+diff --git a/crawl-ref/source/tilecell.cc b/crawl-ref/source/tilecell.cc
+index 0c9a84e..1aa691d 100644
+--- a/crawl-ref/source/tilecell.cc
++++ b/crawl-ref/source/tilecell.cc
+@@ -31,6 +31,7 @@ void packed_cell::clear()
+     glowing_mold     = false;
+     is_sanctuary     = false;
+     is_liquefied     = false;
++    unholied         = false;
+     mangrove_water = false;
+     orb_glow         = 0;
+     blood_rotation   = 0;
+@@ -63,6 +64,7 @@ bool packed_cell::operator ==(const packed_cell &other) const
+     if (travel_trail != other.travel_trail) return false;
+     if (quad_glow != other.quad_glow) return false;
+     if (disjunct != other.disjunct) return false;
++    if (unholied != other.unholied) return false;
+ #if TAG_MAJOR_VERSION == 34
+     if (heat_aura != other.heat_aura) return false;
+ #endif
+diff --git a/crawl-ref/source/tilecell.h b/crawl-ref/source/tilecell.h
+index 7ad3933..0fb14a6 100644
+--- a/crawl-ref/source/tilecell.h
++++ b/crawl-ref/source/tilecell.h
+@@ -8,6 +8,7 @@ enum halo_type
+     HALO_RANGE = 1,
+     HALO_MONSTER = 2,
+     HALO_UMBRA = 3,
++    HALO_UNHOLY = 4,
+ };
+ 
+ struct packed_cell
+@@ -37,6 +38,7 @@ struct packed_cell
+     uint8_t travel_trail;
+     bool quad_glow;
+     uint8_t disjunct;
++    bool unholied;
+ #if TAG_MAJOR_VERSION == 34
+     uint8_t heat_aura;
+ #endif
+@@ -49,7 +51,7 @@ struct packed_cell
+                     glowing_mold(false), is_sanctuary(false), is_liquefied(false),
+                     mangrove_water(false), orb_glow(0), blood_rotation(0),
+                     old_blood(false), travel_trail(0), quad_glow(false),
+-                    disjunct(false)
++                    disjunct(false), unholied(false)
+ #if TAG_MAJOR_VERSION == 34
+                     , heat_aura(false)
+ #endif
+@@ -71,7 +73,8 @@ struct packed_cell
+                                         old_blood(c->old_blood),
+                                         travel_trail(c->travel_trail),
+                                         quad_glow(c->quad_glow),
+-                                        disjunct(c->disjunct)
++                                        disjunct(c->disjunct),
++                                        unholied(c->unholied)
+ #if TAG_MAJOR_VERSION == 34
+                                         , heat_aura(c->heat_aura)
+ #endif
+diff --git a/crawl-ref/source/tiledgnbuf.cc b/crawl-ref/source/tiledgnbuf.cc
+index fd50d72..b821edd 100644
+--- a/crawl-ref/source/tiledgnbuf.cc
++++ b/crawl-ref/source/tiledgnbuf.cc
+@@ -288,7 +288,8 @@ void DungeonCellBuffer::pack_background(int x, int y, const packed_cell &cell)
+                 m_buf_feat.add(TILE_HALO_RANGE, x, y);
+             if (cell.halo == HALO_UMBRA)
+                 m_buf_feat.add(TILE_UMBRA + random2(4), x, y);
+-
++            if (cell.unholied)
++                m_buf_feat.add(TILE_UNHOLIED, x, y);
+             if (cell.orb_glow)
+                 m_buf_feat.add(TILE_ORB_GLOW + cell.orb_glow - 1, x, y);
+             if (cell.quad_glow)
+diff --git a/crawl-ref/source/tilepick.cc b/crawl-ref/source/tilepick.cc
+index 999cc01..5bf868c 100644
+--- a/crawl-ref/source/tilepick.cc
++++ b/crawl-ref/source/tilepick.cc
+@@ -1460,7 +1460,8 @@ tileidx_t tileidx_monster_base(int type, bool in_water, int colour, int number,
+         return TILEP_MONS_CURSE_SKULL;
+     case MONS_CURSE_TOE:
+         return TILEP_MONS_CURSE_TOE;
+-
++    case MONS_DEATHS_HAND:
++        return TILEP_MONS_DEATHS_HAND;
+     // angelic beings ('A')
+     case MONS_ANGEL:
+         return TILEP_MONS_ANGEL;
+diff --git a/crawl-ref/source/tileview.cc b/crawl-ref/source/tileview.cc
+index 42ce622..eba2830 100644
+--- a/crawl-ref/source/tileview.cc
++++ b/crawl-ref/source/tileview.cc
+@@ -1336,6 +1336,9 @@ void tile_apply_properties(const coord_def &gc, packed_cell &cell)
+     else
+         cell.halo = HALO_NONE;
+ 
++    if (mc.flags & MAP_UNHOLIED)
++        cell.unholied = true;
++
+     if (mc.flags & MAP_LIQUEFIED)
+         cell.is_liquefied = true;
+     else if (print_blood && (_suppress_blood(mc)
+-- 
+2.1.0
+
