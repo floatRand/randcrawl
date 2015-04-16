@@ -1808,16 +1808,13 @@ string item_def::name_aux(description_level_type desc, bool terse, bool ident,
         case FOOD_PIZZA: buff << "slice of pizza"; break;
         case FOOD_BEEF_JERKY: buff << "beef jerky"; break;
         case FOOD_CHUNK:
-            switch (determine_chunk_effect(*this, true))
+            switch (determine_chunk_effect(*this))
             {
-                case CE_POISONOUS:
-                    buff << "poisonous ";
-                    break;
                 case CE_MUTAGEN:
                     buff << "mutagenic ";
                     break;
-                case CE_ROT:
-                    buff << "putrefying ";
+                case CE_NOXIOUS:
+                    buff << "inedible ";
                     break;
                 default:
                     break;
@@ -3904,12 +3901,10 @@ string item_prefix(const item_def &item, bool temp)
         if (is_forbidden_food(item))
             prefixes.push_back("forbidden");
 
-        if (is_poisonous(item))
-            prefixes.push_back("poisonous"), prefixes.push_back("inedible");
-        else if (is_mutagenic(item))
+        if (is_mutagenic(item))
             prefixes.push_back("mutagenic");
-        else if (causes_rot(item))
-            prefixes.push_back("rot-inducing"), prefixes.push_back("inedible");
+        else if (is_noxious(item))
+            prefixes.push_back("inedible");
         break;
 
     case OBJ_POTIONS:

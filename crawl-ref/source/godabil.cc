@@ -1028,7 +1028,7 @@ bool zin_recite_to_single_monster(const coord_def& where)
     case ZIN_ROT:
         ASSERT(prayertype == RECITE_IMPURE);
         if (mon->res_rotting() <= 1
-            && mon->rot(&you, 1 + roll_dice(2, degree), true));
+            && mon->rot(&you, 1 + roll_dice(2, degree), true))
         {
             mon->add_ench(mon_enchant(ENCH_SICK, degree, &you,
                           (degree + random2(spellpower)) * BASELINE_DELAY));
@@ -2100,10 +2100,10 @@ static int _mushroom_prob(item_def & corpse)
 
     float trial_prob_f = 1 - powf(p_failure, 1.0f / total_trials);
 
-    // The chance of producing mushrooms depends on the weight of the
-    // corpse involved. Humans weigh 550 so we will take that as the
-    // base factor here.
-    float weight_factor = mons_weight(corpse.mon_type) / 550.0f;
+    // The chance of producing mushrooms depends on the corpse capacity.
+    // Take humans as the base factor here.
+    float weight_factor = (float) max_corpse_chunks(corpse.mon_type) /
+                          (float) max_corpse_chunks(MONS_HUMAN);
 
     trial_prob_f *= weight_factor;
 
@@ -3571,6 +3571,24 @@ void cheibriados_time_bend(int pow)
     }
 }
 
+static int _slouch_damage(monster *mon)
+{
+    // Please change handle_monster_move to match.
+    const int jerk_num = mon->type == MONS_SIXFIRHY ? 8
+                       : mon->type == MONS_JIANGSHI ? 48
+                                                    : 1;
+
+    const int jerk_denom = mon->type == MONS_SIXFIRHY ? 24
+                         : mon->type == MONS_JIANGSHI ? 90
+                                                      : 1;
+
+    const int player_numer = BASELINE_DELAY * BASELINE_DELAY * BASELINE_DELAY;
+    return 4 * (mon->speed * BASELINE_DELAY * jerk_num
+                           / mon->action_energy(EUT_MOVE) / jerk_denom
+                - player_numer / player_movement_speed() / player_speed());
+}
+
+// Must return an int, not a bool, for apply_area_visible.
 static int _slouchable(coord_def where, int pow, int, actor* agent)
 {
     monster* mon = monster_at(where);
@@ -3581,8 +3599,7 @@ static int _slouchable(coord_def where, int pow, int, actor* agent)
         return 0;
     }
 
-    int dmg = (mon->speed - 1000/player_movement_speed()/player_speed());
-    return (dmg > 0) ? 1 : 0;
+    return (_slouch_damage(mon) > 0) ? 1 : 0;
 }
 
 static bool _act_slouchable(const actor *act)
@@ -3600,8 +3617,9 @@ static int _slouch_monsters(coord_def where, int pow, int dummy, actor* agent)
     monster* mon = monster_at(where);
     ASSERT(mon);
 
-    int dmg = (mon->speed - 1000/player_movement_speed()/player_speed());
-    dmg = (dmg > 0 ? roll_dice(dmg*4, 3)/2 : 0);
+    // Between 1/2 and 3/2 of _slouch_damage(), but weighted strongly
+    // towards the middle.
+    const int dmg = roll_dice(_slouch_damage(mon), 3) / 2;
 
     mon->hurt(agent, dmg, BEAM_MMISSILE, KILLED_BY_BEAM, "", "", true);
     return 1;

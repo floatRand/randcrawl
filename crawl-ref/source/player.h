@@ -102,7 +102,6 @@ public:
 
   FixedVector<int8_t, NUM_STATS> stat_loss;
   FixedVector<int8_t, NUM_STATS> base_stats;
-  FixedVector<uint8_t, NUM_STATS> stat_zero;
 
   int hunger;
   int disease;
@@ -557,7 +556,6 @@ public:
     bool        can_pass_through_feat(dungeon_feature_type grid) const;
     bool        is_habitable_feat(dungeon_feature_type actual_grid) const;
     size_type   body_size(size_part_type psize = PSIZE_TORSO, bool base = false) const;
-    int         body_weight(bool base = false) const;
     brand_type  damage_brand(int which_attack = -1);
     int         damage_type(int which_attack = -1);
     random_var  attack_delay(const item_def *weapon, const
@@ -693,7 +691,6 @@ public:
     int res_elec() const;
     int res_poison(bool temp = true) const;
     int res_rotting(bool temp = true) const;
-    bool res_asphyx() const;
     int res_water_drowning() const;
     bool res_sticky_flame() const;
     int res_holy_energy(const actor *) const;
@@ -741,7 +738,7 @@ public:
     bool liquefied_ground() const;
     bool incapacitated() const
     {
-        return actor::incapacitated() || stat_zero[STAT_DEX];
+        return actor::incapacitated() || duration[DUR_CLUMSY];
     }
 
     bool asleep() const;

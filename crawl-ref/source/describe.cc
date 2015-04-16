@@ -1172,9 +1172,8 @@ static string _describe_ammo(const item_def &item)
             description += "It is coated with poison.";
             break;
         case SPMSL_CURARE:
-            description += "It is tipped with asphyxiating poison. Compared "
-                           "to other needles, it is twice as likely to be "
-                           "destroyed on impact";
+            description += "It is tipped with impact poison. It is twice as "
+                           "likely to be destroyed on impact as other needles.";
             break;
         case SPMSL_PARALYSIS:
             description += "It is tipped with a paralysing substance.";
@@ -1862,17 +1861,14 @@ string get_item_description(const item_def &item, bool verbose,
         }
         if (item.base_type == OBJ_CORPSES || item.sub_type == FOOD_CHUNK)
         {
-            switch (determine_chunk_effect(item, true))
+            switch (determine_chunk_effect(item))
             {
-            case CE_POISONOUS:
-                description << "\n\nThis meat is poisonous.";
-                break;
             case CE_MUTAGEN:
                 description << "\n\nEating this meat will cause random "
                                "mutations.";
                 break;
-            case CE_ROT:
-                description << "\n\nThis meat is rotten.";
+            case CE_NOXIOUS:
+                description << "\n\nThis meat is toxic.";
                 break;
             default:
                 break;
@@ -3606,13 +3602,9 @@ static string _monster_stat_description(const monster_info& mi)
         result << uppercase_first(pronoun) << " is cold-blooded and may be "
                                               "slowed by cold attacks.\n";
     }
-    // Monsters can glow from both light and radiation.
-    if (mons_class_flag(mi.type, M_GLOWS_LIGHT))
+
+    if (mons_class_flag(mi.type, M_GLOWS))
         result << uppercase_first(pronoun) << " is outlined in light.\n";
-    if (mons_class_flag(mi.type, M_GLOWS_RADIATION))
-        result << uppercase_first(pronoun) << " is glowing with mutagenic radiation.\n";
-    if (mons_class_flag(mi.type, M_SHADOW))
-        result << uppercase_first(pronoun) << " is wreathed in shadows.\n";
 
     // Seeing invisible.
     if (mi.can_see_invisible())

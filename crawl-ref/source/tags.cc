@@ -1355,8 +1355,6 @@ static void tag_construct_you(writer &th)
         marshallByte(th, you.base_stats[i]);
     for (i = 0; i < NUM_STATS; ++i)
         marshallByte(th, you.stat_loss[i]);
-    for (i = 0; i < NUM_STATS; ++i)
-        marshallUByte(th, you.stat_zero[i]);
 
     CANARY;
 
@@ -1439,7 +1437,7 @@ static void tag_construct_you(writer &th)
     CANARY;
 
     // how many durations?
-    marshallByte(th, NUM_DURATIONS);
+    marshallUByte(th, NUM_DURATIONS);
     for (j = 0; j < NUM_DURATIONS; ++j)
         marshallInt(th, you.duration[j]);
 
@@ -2224,9 +2222,12 @@ static void tag_read_you(reader &th)
         you.base_stats[i] = unmarshallByte(th);
     for (i = 0; i < NUM_STATS; ++i)
         you.stat_loss[i] = unmarshallByte(th);
-    for (i = 0; i < NUM_STATS; ++i)
-        you.stat_zero[i] = unmarshallUByte(th);
 #if TAG_MAJOR_VERSION == 34
+    if (th.getMinorVersion() < TAG_MINOR_STAT_ZERO_DURATION)
+    {
+        for (i = 0; i < NUM_STATS; ++i)
+            unmarshallUByte(th);
+    }
     if (th.getMinorVersion() < TAG_MINOR_STAT_ZERO)
     {
         for (i = 0; i < NUM_STATS; ++i)
