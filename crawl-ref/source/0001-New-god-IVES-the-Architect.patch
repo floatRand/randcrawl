@@ -1,0 +1,1674 @@
+From d4743d5995b31f269bb9a40d9cffa1fc8b250878 Mon Sep 17 00:00:00 2001
+From: SAS <->
+Date: Sat, 18 Apr 2015 16:53:10 +0300
+Subject: [PATCH] New god: IVES the Architect
+
+---
+ crawl-ref/source/ability.cc                        |  54 +++-
+ crawl-ref/source/abyss.cc                          |  11 +
+ crawl-ref/source/dat/database/godname.txt          |   4 +
+ crawl-ref/source/dat/database/godspeak.txt         |   8 +
+ crawl-ref/source/dat/descript/gods.txt             |  28 +-
+ crawl-ref/source/decks.cc                          |  14 +
+ crawl-ref/source/describe-god.cc                   |   3 +
+ crawl-ref/source/end.cc                            |   9 +-
+ crawl-ref/source/enum.h                            |  10 +-
+ crawl-ref/source/feature-data.h                    |   1 +
+ crawl-ref/source/godabil.cc                        | 338 +++++++++++++++++++++
+ crawl-ref/source/godabil.h                         |   7 +
+ crawl-ref/source/godconduct.cc                     |  27 +-
+ crawl-ref/source/goditem.cc                        |  50 +++
+ crawl-ref/source/goditem.h                         |   3 +-
+ crawl-ref/source/godpassive.cc                     |   1 +
+ crawl-ref/source/godwrath.cc                       |  78 ++++-
+ crawl-ref/source/mon-death.cc                      |   4 +
+ crawl-ref/source/mon-ench.cc                       |   4 +
+ crawl-ref/source/mon-pick-data.h                   |   4 +
+ crawl-ref/source/mon-util.cc                       |   9 +
+ crawl-ref/source/mon-util.h                        |   1 +
+ crawl-ref/source/monster.cc                        |  15 +
+ crawl-ref/source/monster.h                         |   1 +
+ crawl-ref/source/player-equip.cc                   |   2 +
+ crawl-ref/source/player-reacts.cc                  |   7 +-
+ crawl-ref/source/player.cc                         |  23 ++
+ crawl-ref/source/religion.cc                       |  67 +++-
+ crawl-ref/source/rltiles/dc-feat.txt               |   1 +
+ crawl-ref/source/rltiles/dc-invocations.txt        |   4 +
+ crawl-ref/source/rltiles/dngn/altars/ives.png      | Bin 0 -> 871 bytes
+ .../rltiles/gui/invocations/ives_abjuration.png    | Bin 0 -> 619 bytes
+ .../rltiles/gui/invocations/ives_antigravity.png   | Bin 0 -> 579 bytes
+ .../gui/invocations/ives_repulsion_blast.png       | Bin 0 -> 611 bytes
+ crawl-ref/source/rltiles/mon/entropy_weaver.png    | Bin 389 -> 1892 bytes
+ crawl-ref/source/terrain.cc                        |   1 +
+ crawl-ref/source/tilepick.cc                       |  13 +-
+ 37 files changed, 785 insertions(+), 17 deletions(-)
+ create mode 100644 crawl-ref/source/rltiles/dngn/altars/ives.png
+ create mode 100644 crawl-ref/source/rltiles/gui/invocations/ives_abjuration.png
+ create mode 100644 crawl-ref/source/rltiles/gui/invocations/ives_antigravity.png
+ create mode 100644 crawl-ref/source/rltiles/gui/invocations/ives_repulsion_blast.png
+
+diff --git a/crawl-ref/source/ability.cc b/crawl-ref/source/ability.cc
+index 609b44d..c358453 100644
+--- a/crawl-ref/source/ability.cc
++++ b/crawl-ref/source/ability.cc
+@@ -193,7 +193,10 @@ ability_type god_abilities[NUM_GODS][MAX_GOD_ABILITIES] =
+       ABIL_NON_ABILITY, ABIL_QAZLAL_DISASTER_AREA },
+     // Ru
+     { ABIL_NON_ABILITY, ABIL_NON_ABILITY, ABIL_RU_DRAW_OUT_POWER,
+-      ABIL_RU_POWER_LEAP, ABIL_RU_APOCALYPSE }
++      ABIL_RU_POWER_LEAP, ABIL_RU_APOCALYPSE },
++    // IVES
++    { ABIL_NON_ABILITY, ABIL_IVES_ANTIGRAVITY, ABIL_IVES_ABJURATION,
++      ABIL_NON_ABILITY, ABIL_IVES_REPULSION_BLAST }
+ };
+ 
+ // The description screen was way out of date with the actual costs.
+@@ -461,6 +464,15 @@ static const ability_def Ability_List[] =
+     { ABIL_QAZLAL_DISASTER_AREA, "Disaster Area", 7, 0, 0,
+       generic_cost::range(10, 14), 0, ABFLAG_NONE },
+ 
++    // IVES
++    { ABIL_IVES_ANTIGRAVITY, "Anti-gravity",
++      0, 0, 0, 0, 0, ABFLAG_NONE },
++    { ABIL_IVES_ABJURATION, "Purge Continuum",
++       5, 0, 200, 8, 0, ABFLAG_NONE},
++    { ABIL_IVES_REPULSION_BLAST, "Great Repulsion",
++       7, 0, 400, 10, 0, ABFLAG_EXHAUSTION},
++    { ABIL_IVES_GREATERTELE, "Forge Gateway",
++       0, 0, 0, 0, 0, ABFLAG_NONE},
+     { ABIL_STOP_RECALL, "Stop Recall", 0, 0, 0, 0, 0, ABFLAG_NONE},
+ 
+     // zot defence abilities
+@@ -1326,6 +1338,17 @@ talent get_talent(ability_type ability, bool check_confused)
+         failure = 60 - (you.piety / 20) - you.skill(SK_EVOCATIONS, 5);
+         break;
+ 
++    case ABIL_IVES_ABJURATION:
++        invoc = true;
++        failure = 40 - (you.piety / 20) - you.skill(SK_INVOCATIONS, 5);
++        break;
++
++    case ABIL_IVES_REPULSION_BLAST:
++        invoc = true;
++        failure = 60 - (you.piety / 20) - you.skill(SK_INVOCATIONS, 5);
++        break;
++
++    case ABIL_IVES_GREATERTELE:
+     case ABIL_RENOUNCE_RELIGION:
+     case ABIL_CONVERT_TO_BEOGH:
+         invoc = true;
+@@ -1755,7 +1778,10 @@ static bool _check_ability_possible(const ability_def& abil,
+             return false;
+         }
+         return true;
+-
++    case ABIL_IVES_ABJURATION:
++    case ABIL_IVES_ANTIGRAVITY:
++    case ABIL_IVES_GREATERTELE:
++    case ABIL_IVES_REPULSION_BLAST:
+     default:
+         return true;
+     }
+@@ -3262,6 +3288,27 @@ static spret_type _do_ability(const ability_def& abil, bool fail)
+         you.increase_duration(DUR_EXHAUSTED, 30 + random2(20));
+         break;
+ 
++
++    case ABIL_IVES_ANTIGRAVITY:
++         IVES_antigravity();
++    break;
++    case ABIL_IVES_REPULSION_BLAST:
++        fail_check();
++        if (you.duration[DUR_EXHAUSTED])
++        {
++            mpr("You're too exhausted to create a repulsion.");
++            return SPRET_ABORT;
++        }
++        you.increase_duration(DUR_EXHAUSTED, 20 + random2(10));
++        IVES_repulsion();
++    break;
++    case ABIL_IVES_ABJURATION:
++        fail_check();
++        IVES_abjuration();
++    break;
++    case ABIL_IVES_GREATERTELE:
++        IVES_gateway();
++    break;
+     case ABIL_RENOUNCE_RELIGION:
+         fail_check();
+         if (yesno("Really renounce your faith, foregoing its fabulous benefits?",
+@@ -4064,6 +4111,9 @@ vector<ability_type> get_god_abilities(bool include_unusable, bool ignore_piety)
+     if (can_do_capstone_ability(GOD_ZIN))
+         abilities.push_back(ABIL_ZIN_CURE_ALL_MUTATIONS);
+ 
++    if (can_do_capstone_ability(GOD_IVES))
++        abilities.push_back(ABIL_IVES_GREATERTELE);
++
+     return abilities;
+ }
+ 
+diff --git a/crawl-ref/source/abyss.cc b/crawl-ref/source/abyss.cc
+index da1e5b9..602a2bc 100644
+--- a/crawl-ref/source/abyss.cc
++++ b/crawl-ref/source/abyss.cc
+@@ -384,6 +384,15 @@ static string _who_banished(const string &who)
+ void banished(const string &who)
+ {
+     ASSERT(!crawl_state.game_is_arena());
++
++    // IVES might block banishment
++    if(you_worship(GOD_IVES)
++       && x_chance_in_y(you.piety, MAX_PIETY + 10))
++        {
++        simple_god_message(" stabilizes the space-time around you, preventing banishment!");
++            return;
++        }
++
+     push_features_to_abyss();
+     if (brdepth[BRANCH_ABYSS] == -1)
+         return;
+@@ -1594,6 +1603,8 @@ static void _increase_depth()
+     int delta = you.time_taken * (you.abyss_speed + 40) / 200;
+     if (!you_worship(GOD_CHEIBRIADOS) || you.penance[GOD_CHEIBRIADOS])
+         delta *= 2;
++    if (you_worship(GOD_IVES) || you.penance[GOD_IVES])
++        delta = delta * 0.75;
+     if (you.duration[DUR_TELEPORT])
+         delta *= 5;
+     const double theta = abyssal_state.phase;
+diff --git a/crawl-ref/source/dat/database/godname.txt b/crawl-ref/source/dat/database/godname.txt
+index 58e6f02..c01a290 100644
+--- a/crawl-ref/source/dat/database/godname.txt
++++ b/crawl-ref/source/dat/database/godname.txt
+@@ -67,6 +67,10 @@ Ru lastname
+ 
+ Ru the Awakened
+ %%%%
++IVES lastname
++
++IVES the Architect
++%%%%
+ Xom lastname
+ 
+ w:280
+diff --git a/crawl-ref/source/dat/database/godspeak.txt b/crawl-ref/source/dat/database/godspeak.txt
+index 00b7118..c3f3327 100644
+--- a/crawl-ref/source/dat/database/godspeak.txt
++++ b/crawl-ref/source/dat/database/godspeak.txt
+@@ -879,3 +879,11 @@ Zin welcome
+ 
+ Zin says: Spread the light, my child.
+ %%%%
++IVES penance
++
++IVES says: Be cast to the abyss you love so much!
++%%%%
++IVES welcome
++
++IVES says: Protect the continuum!
++%%%%
+diff --git a/crawl-ref/source/dat/descript/gods.txt b/crawl-ref/source/dat/descript/gods.txt
+index 9cb7192..dce28af 100644
+--- a/crawl-ref/source/dat/descript/gods.txt
++++ b/crawl-ref/source/dat/descript/gods.txt
+@@ -1,4 +1,4 @@
+-# Goals for the prose section: pitch the god to a player/potential worshipper.
++﻿# Goals for the prose section: pitch the god to a player/potential worshipper.
+ # Why should they worship this god? What are the advantages & limitations?
+ # What's 'cool' about this god?
+ %%%%
+@@ -186,6 +186,15 @@ preferably followed by donations of more. In exchange, worshippers may invoke
+ Zin's wrath upon sinners, and eventually gain various divine protections. Zin's
+ followers can convert to Elyvilon or the Shining One while keeping some piety.
+ %%%%
++IVES
++
++IVES is god outside of space-time, keen on preserving and protecting its
++integrity. Followers of IVES are granted some significant powers, but as
++long as they refrain from using space-warping magic or items. One can earn IVES'
++appreciation by exploring the world and stabilizing the spacetime with their 
++presence. IVES has no interest in killing, but gladly accepts slaying of any 
++creature distorting space.
++%%%%
+ Ashenzari powers
+ 
+ Ashenzari exhorts followers to garb themselves with curses, and provides
+@@ -390,6 +399,15 @@ eventually find temporary safety in a divine refuge. As piety grows, followers
+ will be protected from mutation, and Zin may even occasionally directly
+ intervene to save a follower's life.
+ %%%%
++IVES powers
++
++IVES anchors his followers in space, but in return, allows them various powers
++and boons. IVES' servants are coagulated in aura that protects them from 
++banishment and they can inflict anchor other creatures in space by striking them.
++Later on, IVES may grant his more devout followers ability to send back creatures
++summoned from other planes, although ability works on many conjured creatures as
++well. ( more to add )
++%%%%
+ Ashenzari wrath
+ 
+ Ashenzari's wrath is not like other gods'; it is constant and unrelenting for
+@@ -543,3 +561,11 @@ Those under Zin's wrath will find their beneficial mutations stripped away,
+ their bellies empty, their enemies alerted, and their senses confounded by the
+ axioms of Law; confusion, fainting and complete paralysis will be their lot.
+ %%%%
++IVES wrath
++
++Those who have transgressed agains IVES will find the spacetime against them.
++They will be anchored to space from time to time without gaining any benefits,
++their summoned creatures will be banished and the translocations will not work
++as they should.
++%%%%
++
+diff --git a/crawl-ref/source/decks.cc b/crawl-ref/source/decks.cc
+index bb82e5c..ec37741 100644
+--- a/crawl-ref/source/decks.cc
++++ b/crawl-ref/source/decks.cc
+@@ -1400,6 +1400,8 @@ static void _suppressed_card_message(god_type god, conduct_type done)
+ 
+         case DID_FIRE: forbidden_act = "fiery"; break;
+ 
++        case DID_TEAR_SPACE: forbidden_act = "space-tearing"; break;
++
+         default: forbidden_act = "buggy"; break;
+     }
+ 
+@@ -1570,6 +1572,12 @@ static void _damnation_card(int power, deck_rarity_type rarity)
+         return;
+     }
+ 
++    if (you_worship(GOD_IVES))
++    {
++        _suppressed_card_message(you.religion, DID_TEAR_SPACE);
++        return;
++    }
++
+     // Calculate how many extra banishments you get.
+     const int power_level = _get_power_level(power, rarity);
+     int nemelex_bonus = 0;
+@@ -1608,6 +1616,12 @@ static void _warpwright_card(int power, deck_rarity_type rarity)
+         return;
+     }
+ 
++    if (you_worship(GOD_IVES))
++    {
++        _suppressed_card_message(you.religion, DID_TEAR_SPACE);
++        return;
++    }
++
+     int count = 0;
+     coord_def f;
+     for (adjacent_iterator ai(you.pos()); ai; ++ai)
+diff --git a/crawl-ref/source/describe-god.cc b/crawl-ref/source/describe-god.cc
+index 88e9fcd..2247d5a 100644
+--- a/crawl-ref/source/describe-god.cc
++++ b/crawl-ref/source/describe-god.cc
+@@ -331,6 +331,9 @@ static const char *divine_title[NUM_GODS][8] =
+     // Ru -- enlightenment theme
+     {"Sleeper",           "Questioner",             "Initiate",                 "Seeker of Truth",
+         "Walker of the Path","Lifter of the Veil",     "Drinker of Unreality",     "Transcendent"},
++    // IVES, opposite of Lugonu
++    {"Impure",           "Anchored",             "Weaver",                 "Stabilizing @Genus@",
++      "Agent of Order",   "Planar Enforcer",     "Demiurge",     "Planebinder"},
+ };
+ 
+ string god_title(god_type which_god, species_type which_species, int piety)
+diff --git a/crawl-ref/source/end.cc b/crawl-ref/source/end.cc
+index 5c06da5..17da410 100644
+--- a/crawl-ref/source/end.cc
++++ b/crawl-ref/source/end.cc
+@@ -262,7 +262,14 @@ NORETURN void end_game(scorefile_entry &se)
+                 }
+                 break;
+             }
+-
++            case GOD_IVES:
++            {
++              if (se.get_death_type() != KILLED_BY_DISINT
++                    && se.get_death_type() != KILLED_BY_LAVA)
++                {
++                    mprf(MSGCH_GOD, "Your body falls into some unseen crack in space.");
++                }
++            }
+             case GOD_YREDELEMNUL:
+                 if (you.undead_state() != US_ALIVE)
+                     simple_god_message(" claims you as an undead slave.");
+diff --git a/crawl-ref/source/enum.h b/crawl-ref/source/enum.h
+index 468c665..2938465 100644
+--- a/crawl-ref/source/enum.h
++++ b/crawl-ref/source/enum.h
+@@ -330,7 +330,10 @@ enum ability_type
+     ABIL_RU_SACRIFICE_SKILL,
+         ABIL_FINAL_SACRIFICE = ABIL_RU_SACRIFICE_SKILL,
+     ABIL_RU_REJECT_SACRIFICES,
+-
++    ABIL_IVES_ANTIGRAVITY,
++    ABIL_IVES_ABJURATION,
++    ABIL_IVES_GREATERTELE,
++    ABIL_IVES_REPULSION_BLAST,
+     // For both Yred and Beogh
+     ABIL_STOP_RECALL = 1500,
+ 
+@@ -1227,6 +1230,9 @@ enum conduct_type
+     DID_KILL_FIERY,                       // Dithmenos
+     DID_SACRIFICE_LOVE,                   // Ru
+ 
++    DID_TEAR_SPACE,                       // IVES
++    DID_KILL_SPACETEARER,                 // IVES
++
+     NUM_CONDUCTS
+ };
+ 
+@@ -1616,6 +1622,7 @@ enum dungeon_feature_type
+     DNGN_ALTAR_QAZLAL,
+     DNGN_ALTAR_RU,
+ #endif
++    DNGN_ALTAR_IVES,
+ 
+     DNGN_FOUNTAIN_BLUE,
+     DNGN_FOUNTAIN_SPARKLING,           // aka 'Magic Fountain' {dlb}
+@@ -2123,6 +2130,7 @@ enum god_type
+     GOD_GOZAG,
+     GOD_QAZLAL,
+     GOD_RU,
++    GOD_IVES,
+     NUM_GODS,                          // always after last god
+ 
+     GOD_RANDOM = 100,
+diff --git a/crawl-ref/source/feature-data.h b/crawl-ref/source/feature-data.h
+index 7c13fe5..d8162e8 100644
+--- a/crawl-ref/source/feature-data.h
++++ b/crawl-ref/source/feature-data.h
+@@ -493,6 +493,7 @@ ALTAR(DNGN_ALTAR_DITHMENOS, "shadowy altar of Dithmenos", "altar_dithmenos", ETC
+ ALTAR(DNGN_ALTAR_GOZAG, "opulent altar of Gozag", "altar_gozag", ETC_GOLD), // for the Gold God!
+ ALTAR(DNGN_ALTAR_QAZLAL, "stormy altar of Qazlal", "altar_qazlal", ETC_ELEMENTAL),
+ ALTAR(DNGN_ALTAR_RU, "sacrificial altar of Ru", "altar_ru", BROWN),
++ALTAR(DNGN_ALTAR_IVES, "geometric altar of IVES", "altar_ives", LIGHTBLUE),
+ 
+ #define FOUNTAIN(enum, name, vaultname, colour)\
+ {\
+diff --git a/crawl-ref/source/godabil.cc b/crawl-ref/source/godabil.cc
+index 59495c6..9aae3ef 100644
+--- a/crawl-ref/source/godabil.cc
++++ b/crawl-ref/source/godabil.cc
+@@ -20,6 +20,7 @@
+ #include "cloud.h"
+ #include "colour.h"
+ #include "coordit.h"
++#include "delay.h"
+ #include "dactions.h"
+ #include "database.h"
+ #include "dgn-overview.h"
+@@ -71,9 +72,11 @@
+ #include "spl-transloc.h"
+ #include "spl-util.h"
+ #include "sprint.h"
++#include "stairs.h"
+ #include "state.h"
+ #include "stringutil.h"
+ #include "target.h"
++#include "tileview.h"  // for IVES' ability
+ #include "teleport.h" // monster_teleport
+ #include "terrain.h"
+ #include "throw.h"
+@@ -82,6 +85,7 @@
+ #endif
+ #include "timed_effects.h"
+ #include "traps.h"
++#include "unicode.h"
+ #include "viewchar.h"
+ #include "view.h"
+ 
+@@ -6658,3 +6662,337 @@ bool ru_apocalypse()
+     drain_player(100, false, true);
+     return true;
+ }
++
++
++/**
++*
++* IVES' abilities
++*
++**/
++
++bool IVES_dimensional_anchoring()
++{
++        monster* mons;
++        for (adjacent_iterator ai(you.pos()); ai; ++ai){
++            mons = monster_at(*ai);
++            if (!cell_is_solid(*ai) && monster_at(*ai))
++            {
++                mons->add_ench(mon_enchant(ENCH_DIMENSION_ANCHOR, 1, &you, 1 + you.piety / 6));
++            }
++        }
++        return true;
++}
++
++
++static int _IVES_abjurable(coord_def where, int pow, int, actor* agent)
++{
++    monster* mon = monster_at(where);
++    if (mon == nullptr || !mon->is_summoned() || mons_is_projectile(mon->type) || mon->friendly())
++        return 0;
++    return 1;
++}
++
++
++static int _IVES_abjure_enemy(coord_def where, int pow, int dummy, actor* agent)
++{
++
++    if (!_IVES_abjurable(where, pow, dummy, agent))
++        return 0;
++
++    monster* mon = monster_at(where);
++    ASSERT(mon);
++
++    const int abjdur = pow * 12;
++
++    int duration;
++    if (mon->is_summoned(&duration))
++    {
++        int sockage = max(fuzz_value(abjdur, 60, 30), 40);
++        dprf("%s abj: dur: %d, abj: %d",
++             mon->name(DESC_PLAIN).c_str(), duration, sockage);
++
++             mon_enchant abj = mon->get_ench(ENCH_ABJ);
++             if (!mon->lose_ench_duration(abj, sockage))
++             simple_monster_message(mon, " shudders as outside presences are purged.");
++    }
++
++    return 1;
++}
++
++bool IVES_antigravity()
++{
++       mpr("You start ignoring gravity.");
++       you.attribute[ATTR_PERM_FLIGHT] = 1;
++            float_player();
++            if (you.species == SP_TENGU) mpr("You feel very comfortable in the air.");
++        return true;
++}
++
++
++bool IVES_abjuration()
++{
++ int pow = 75 + you.skill_rdiv(SK_INVOCATIONS, 4) + you.piety / 4;
++ mpr("You harmonize the local space, purging foreign presences!");
++ apply_area_visible(_IVES_abjure_enemy, pow, &you);
++
++ return true;
++}
++
++
++static void _IVES_tele_to_level(const level_pos &pos)
++{
++    dungeon_feature_type stair_taken =
++        absdungeon_depth(pos.id.branch, pos.id.depth) > env.absdepth0 ?
++        DNGN_STONE_STAIRS_DOWN_I : DNGN_STONE_STAIRS_UP_I;
++
++    if (pos.id.depth == brdepth[pos.id.branch])
++        stair_taken = DNGN_STONE_STAIRS_DOWN_I;
++
++    if (!player_in_branch(pos.id.branch) && pos.id.depth == 1
++        && pos.id.branch != BRANCH_DUNGEON)
++    {
++        stair_taken = branches[pos.id.branch].entry_stairs;
++    }
++
++    if (is_connected_branch(pos.id.branch))
++        you.level_stack.clear();
++    else
++    {
++        for (int i = you.level_stack.size() - 1; i >= 0; i--)
++            if (you.level_stack[i].id == pos.id)
++                you.level_stack.resize(i);
++        if (!player_in_branch(pos.id.branch))
++            you.level_stack.push_back(level_pos::current());
++    }
++
++    const level_id old_level = level_id::current();
++
++    you.where_are_you = static_cast<branch_type>(pos.id.branch);
++    you.depth         = pos.id.depth;
++
++    leaving_level_now(stair_taken);
++    const bool newlevel = load_level(stair_taken, LOAD_ENTER_LEVEL, old_level);
++    tile_new_level(newlevel);
++    if (!crawl_state.test)
++        save_game_state();
++    new_level();
++    seen_monsters_react();
++    viewwindow();
++
++    // Tell stash-tracker and travel that we've changed levels.
++    trackers_init_new_level(true);
++}
++
++
++bool IVES_gateway()
++{
++    /** Based on wiz-code **/
++    string name;
++    mpr("All space unfolds before you. Where do you wish to go?");
++    const level_pos pos =
++        prompt_translevel_target(TPF_DEFAULT_OPTIONS, name);
++
++    if (pos.id.depth < 1
++        || (pos.id.depth > brdepth[pos.id.branch])
++        || (int)you.get_place_info(pos.id.branch).levels_seen < pos.id.depth
++            )
++    {
++        canned_msg(MSG_STRANGE_STASIS);
++        return false;
++    }
++
++    stop_delay(true);
++    run_animation(ANIMATION_BANISH, UA_BRANCH_ENTRY, false);
++
++    _IVES_tele_to_level(pos);
++    mpr("You pass through a gate. As you do so, it instantly collapses.");
++
++    you.one_time_ability_used.set(GOD_IVES);
++    take_note(Note(NOTE_GOD_GIFT, you.religion));
++
++    return true;
++}
++
++struct ives_dist_sorter
++{
++    coord_def pos;
++    bool operator()(const actor* a, const actor* b)
++    {
++        return a->pos().distance_from(pos) > b->pos().distance_from(pos);
++    }
++};
++
++void _IVES_repulsion_blast(actor* agent, coord_def target)
++{
++    /// Based on the Fan of Gales' code, although modified
++    vector<actor *> act_list;
++    int maxrange = 5;
++    int radius = min(maxrange, 2 + you.skill_rdiv(SK_INVOCATIONS,1,5) ); // max at 16 invoc
++    for (actor_near_iterator ai(agent->pos(), LOS_SOLID); ai; ++ai)
++    {
++        if (ai->is_stationary()
++            || ai->pos().distance_from(agent->pos()) > radius
++            || ai->pos() == agent->pos() // so it's never aimed_at_feet
++            )
++        {
++            continue;
++        }
++
++        act_list.push_back(*ai);
++    }
++    ives_dist_sorter sorter = {agent->pos()};
++    sort(act_list.begin(), act_list.end(), sorter);
++    bolt repulsion_beam;
++    repulsion_beam.hit             = AUTOMATIC_HIT;
++    repulsion_beam.pierce          = true;
++    repulsion_beam.affects_nothing = true;
++    repulsion_beam.source          = agent->pos();
++    repulsion_beam.range           = LOS_RADIUS;
++    repulsion_beam.is_tracer       = true;
++
++    map<actor *, coord_def> collisions;
++    counted_monster_list affected_monsters;
++
++    for (actor *act : act_list)
++    {
++        repulsion_beam.target = act->pos();
++        repulsion_beam.fire();
++        int push = radius - act->pos().distance_from(agent->pos()); // try to push everyone in roughly a circle?
++        if(push<0){ push=0; }
++        bool pushed = false;
++
++        for (unsigned int j = 0; j < repulsion_beam.path_taken.size() - 1 && push;
++             ++j)
++        {
++            if (repulsion_beam.path_taken[j] == act->pos())
++            {
++                coord_def newpos = repulsion_beam.path_taken[j+1];
++                if (!actor_at(newpos) && !cell_is_solid(newpos)
++                    && act->can_pass_through(newpos)
++                    && act->is_habitable(newpos))
++                {
++                    act->move_to_pos(newpos);
++                    pushed = true;
++                }
++                else //Try to find an alternate route to push
++                {
++                    bool success = false;
++                    for (adjacent_iterator di(newpos); di; ++di)
++                    {
++                        if (adjacent(*di, act->pos())
++                            && di->distance_from(agent->pos())
++                                == newpos.distance_from(agent->pos())
++                            && !actor_at(*di) && !cell_is_solid(*di)
++                            && act->can_pass_through(*di)
++                            && act->is_habitable(*di))
++                        {
++                            act->move_to_pos(*di);
++                            pushed = true;
++                            // Adjust repulsion path for moved monster
++                            repulsion_beam.target = *di;
++                            repulsion_beam.fire();
++                            success = true;
++                            break;
++                        }
++                    }
++
++                    // If no luck, they slam into something.
++                    if (!success)
++                        collisions.insert(make_pair(act, newpos));
++                }
++            }
++        }
++        if (pushed)
++        {
++            if (act->is_monster())
++            {
++                act->as_monster()->speed_increment -= random2(6) + 4;
++                if (you.can_see(act))
++                    affected_monsters.add(act->as_monster());
++            }
++        }
++    }
++    // cloud-moving is unchanged since it probably works fine
++    vector<int> cloud_list;
++    for (distance_iterator di(agent->pos(), true, true, radius + 2); di; ++di)
++    {
++        if (env.cgrid(*di) != EMPTY_CLOUD
++            && cell_see_cell(agent->pos(), *di, LOS_SOLID)
++            && target.origin())
++        {
++            cloud_list.push_back(env.cgrid(*di));
++        }
++    }
++
++    for (int i = cloud_list.size() - 1; i >= 0; --i)
++    {
++        repulsion_beam.target = env.cloud[cloud_list[i]].pos;
++        repulsion_beam.fire();
++
++        int dist = env.cloud[cloud_list[i]].pos.distance_from(agent->pos());
++        int push = (dist > 5 ? 2 : dist > 2 ? 3 : 4);
++
++        for (unsigned int j = 0;
++             j < repulsion_beam.path_taken.size() - 1 && push;
++             ++j)
++        {
++            if (env.cgrid(repulsion_beam.path_taken[j]) == cloud_list[i])
++            {
++                coord_def newpos = repulsion_beam.path_taken[j+1];
++                if (!cell_is_solid(newpos)
++                    && env.cgrid(newpos) == EMPTY_CLOUD)
++                {
++                    swap_clouds(newpos, repulsion_beam.path_taken[j]);
++                    --push;
++                }
++                else //Try to find an alternate route to push
++                {
++                    for (distance_iterator di(repulsion_beam.path_taken[j],
++                         false, true, 1); di; ++di)
++                    {
++                        if (di->distance_from(agent->pos())
++                                == newpos.distance_from(agent->pos())
++                            && *di != agent->pos() // never aimed_at_feet
++                            && !cell_is_solid(*di)
++                            && env.cgrid(*di) == EMPTY_CLOUD)
++                        {
++                            swap_clouds(*di, repulsion_beam.path_taken[j]);
++                            --push;
++                            repulsion_beam.target = *di;
++                            repulsion_beam.fire();
++                            j--;
++                            break;
++                        }
++                    }
++                }
++            }
++        }
++    }
++    noisy(15, agent->pos());
++        mpr("You clear space, shunting everything outwards!");
++    if (!affected_monsters.empty())
++    {
++        const string message =
++            make_stringf("%s %s blown away by the repulsion.",
++                         affected_monsters.describe().c_str(),
++                         conjugate_verb("be", affected_monsters.count() > 1).c_str());
++        if (strwidth(message) < get_number_of_cols() - 2)
++            mpr(message);
++        else
++            mpr("The monsters around you are shunted away!");
++    }
++
++    for (auto it : collisions)
++        if (it.first->alive())
++            it.first->collide(it.second, agent, radius * 5);
++}
++
++bool IVES_repulsion()
++{
++    _IVES_repulsion_blast(&you, you.pos());
++    return true;
++}
++
++
++
++
+diff --git a/crawl-ref/source/godabil.h b/crawl-ref/source/godabil.h
+index 03e8477..64cb1ca 100644
+--- a/crawl-ref/source/godabil.h
++++ b/crawl-ref/source/godabil.h
+@@ -155,4 +155,11 @@ void ru_do_retribution(monster* mons, int damage);
+ void ru_draw_out_power();
+ bool ru_power_leap();
+ bool ru_apocalypse();
++
++bool IVES_dimensional_anchoring();
++bool IVES_abjuration();
++bool IVES_antigravity();
++bool IVES_gateway();
++bool IVES_repulsion();
++void _IVES_repulsion_blast(actor* agent, coord_def target);
+ #endif
+diff --git a/crawl-ref/source/godconduct.cc b/crawl-ref/source/godconduct.cc
+index be27989..42fd550 100644
+--- a/crawl-ref/source/godconduct.cc
++++ b/crawl-ref/source/godconduct.cc
+@@ -68,7 +68,8 @@ static const char *conducts[] =
+     "Souled Friend Died", "Attack In Sanctuary",
+     "Kill Artificial", "Destroy Spellbook",
+     "Exploration", "Desecrate Holy Remains", "Seen Monster",
+-    "Fire", "Kill Fiery", "Sacrificed Love"
++    "Fire", "Kill Fiery", "Sacrificed Love", "Use Translocations",
++    "Kill space-violators"
+ };
+ COMPILE_CHECK(ARRAYSZ(conducts) == NUM_CONDUCTS);
+ 
+@@ -446,6 +447,13 @@ static peeve_map divine_peeves[] =
+     peeve_map(),
+     // GOD_RU,
+     peeve_map(),
++    // GOD_IVES
++    {
++        { DID_TEAR_SPACE, {
++            1, 1, " forgives your inadvertent space-time distortion, just this once.",
++            " does not appreciate you tearing the fragile space-time!", nullptr, -5
++        } },
++    },
+ };
+ 
+ 
+@@ -838,6 +846,23 @@ static like_map divine_likes[] =
+             }
+         } },
+     },
++    // GOD_IVES
++    {
++        { DID_KILL_SPACETEARER, {
++            -6, 10, 0, " appreciates your killing of a violator of the space-time."
++        } },
++        { DID_EXPLORATION, {
++            0, 0, 0, nullptr,
++            [] (int &piety, int &denom, const monster* /*victim*/)
++            {
++                // piety = denom = level at the start of the function
++                piety = 10;
++            }
++        } },
++    },
++
++
++
+ };
+ 
+ /**
+diff --git a/crawl-ref/source/goditem.cc b/crawl-ref/source/goditem.cc
+index f05145e..480a335 100644
+--- a/crawl-ref/source/goditem.cc
++++ b/crawl-ref/source/goditem.cc
+@@ -230,6 +230,32 @@ bool is_evil_item(const item_def& item)
+     }
+ }
+ 
++bool is_spacetearing_item(const item_def& item)
++{
++       switch (item.base_type)
++    {
++    case OBJ_WEAPONS:
++        {
++        const int item_brand = get_weapon_brand(item);
++        return item_brand == SPWPN_DISTORTION || item_brand == SPWPN_CHAOS;
++        }
++        break;
++    case OBJ_WANDS:
++        return item.sub_type == WAND_TELEPORTATION || item.sub_type == WAND_RANDOM_EFFECTS;
++    case OBJ_POTIONS:
++    case OBJ_SCROLLS:
++        return item.sub_type == SCR_TELEPORTATION || item.sub_type == SCR_BLINKING;
++        break;
++    case OBJ_STAVES:
++    case OBJ_BOOKS:
++        return _is_bookrod_type(item, is_spacetearing_spell);
++    case OBJ_RODS:
++    case OBJ_MISCELLANY:
++    default:
++        return false;
++    }
++}
++
+ bool is_unclean_item(const item_def& item)
+ {
+     if (is_unrandom_artefact(item))
+@@ -523,6 +549,21 @@ bool is_fiery_spell(spell_type spell)
+     return bool(disciplines & SPTYP_FIRE);
+ }
+ 
++bool is_spacetearing_spell(spell_type spell)
++{
++    const spschools_type disciplines = get_spell_disciplines(spell);
++
++        if(spell == SPELL_ABJURATION) return false;
++        else if(spell == SPELL_AURA_OF_ABJURATION) return false;
++        else if(spell == SPELL_SUMMON_LIGHTNING_SPIRE) return false; // specifically constructs
++        else if(spell == SPELL_SHADOW_CREATURES) return false; // constructs creatures from shadows
++        else if(spell == SPELL_DRAGON_CALL) return false; // calls dragons!
++        else if(spell == SPELL_HAUNT) return false; // doesn't really care for undead, but these already exist on plane
++        else if(spell == SPELL_FORCEFUL_DISMISSAL) return false;
++
++    return (bool(disciplines & SPTYP_SUMMONING) || bool(disciplines & SPTYP_TRANSLOCATION));
++}
++
+ static bool _your_god_hates_spell(spell_type spell)
+ {
+     return god_hates_spell(spell, you.religion);
+@@ -611,6 +652,12 @@ conduct_type god_hates_item_handling(const item_def &item)
+         }
+         break;
+ 
++    case GOD_IVES:
++        if (item_type_known(item)
++            && (is_spacetearing_item(item)))
++        {
++            return DID_TEAR_SPACE;
++        }
+     default:
+         break;
+     }
+@@ -717,6 +764,9 @@ bool god_dislikes_spell_discipline(spschools_type discipline, god_type god)
+     case GOD_DITHMENOS:
+         return bool(discipline & SPTYP_FIRE);
+ 
++    case GOD_IVES:
++        return bool(discipline & SPTYP_TRANSLOCATION);
++
+     default:
+         break;
+     }
+diff --git a/crawl-ref/source/goditem.h b/crawl-ref/source/goditem.h
+index aefe913..efe6cd0 100644
+--- a/crawl-ref/source/goditem.h
++++ b/crawl-ref/source/goditem.h
+@@ -23,10 +23,11 @@ bool is_unclean_spell(spell_type spell);
+ bool is_chaotic_spell(spell_type spell);
+ bool is_hasty_spell(spell_type spell);
+ bool is_fiery_spell(spell_type spell);
++bool is_spacetearing_item(const item_def& item);
++bool is_spacetearing_spell(spell_type spell);
+ conduct_type good_god_hates_item_handling(const item_def &item);
+ conduct_type god_hates_item_handling(const item_def &item);
+ bool god_hates_item(const item_def &item);
+-
+ // NOTE: As of now, these two functions only say if a god won't give a
+ // spell/school when giving a gift.
+ bool god_dislikes_spell_type(spell_type spell, god_type god = you.religion);
+diff --git a/crawl-ref/source/godpassive.cc b/crawl-ref/source/godpassive.cc
+index 051e979..fc5d0a1 100644
+--- a/crawl-ref/source/godpassive.cc
++++ b/crawl-ref/source/godpassive.cc
+@@ -879,3 +879,4 @@ ru_interference get_ru_attack_interference_level()
+     else
+         return DO_NOTHING;
+ }
++
+diff --git a/crawl-ref/source/godwrath.cc b/crawl-ref/source/godwrath.cc
+index d6d3553..1933b7f 100644
+--- a/crawl-ref/source/godwrath.cc
++++ b/crawl-ref/source/godwrath.cc
+@@ -78,6 +78,7 @@ static const char *_god_wrath_adjectives[] =
+     "greed",            // Gozag (unused)
+     "adversity",        // Qazlal
+     "disappointment",   // Ru
++    "will",             // IVES
+ };
+ COMPILE_CHECK(ARRAYSZ(_god_wrath_adjectives) == NUM_GODS);
+ 
+@@ -1695,6 +1696,79 @@ static bool _qazlal_retribution()
+ 
+     return true;
+ }
++/**
++ * Call down the wrath of IVES upon the player!
++ *
++ * Spacetime-fuckery
++ *
++ * @return Whether to take further divine wrath actions afterward.
++ */
++
++ static void _IVES_summon(int crys)
++{
++
++    mgen_data temp =
++    mgen_data::hostile_at(MONS_NO_MONSTER,
++                              _god_wrath_name(GOD_IVES),
++                              true, 0, 0, you.pos(), 0, GOD_IVES);
++    temp.hd = you.experience_level;
++    temp.extra_flags |= (MF_NO_REWARD | MF_HARD_RESET);
++
++    int how_many = 1 + (you.experience_level / 4);
++        if(crys==1) how_many = 1;
++    bool success = false;
++    for (int i = 0; i < how_many; i++)
++    {
++        if(crys==1) temp.cls = MONS_DIAMOND_OBELISK;
++        else temp.cls = MONS_CRYSTAL_GUARDIAN;
++        if (create_monster(temp, false))
++            success = true;
++    }
++
++    if (success)
++        simple_god_message(" sends out crystal creatures from slips in space!", GOD_IVES);
++    else
++        simple_god_message(" space seems rather normal.", GOD_IVES);
++}
++
++static bool _ives_retribution(){
++
++ int tension = get_tension(GOD_IVES);
++ int wrath_value = random2(tension);
++    // Determine the level of wrath
++    int wrath_type = 0;
++    if (wrath_value < 2)       { wrath_type = 0; }
++    else if (wrath_value < 4)  { wrath_type = 1; }
++    else if (wrath_value < 8)  { wrath_type = 2; }
++    else if (wrath_value < 16) { wrath_type = 3; }
++    else                       { wrath_type = 4; }
++
++  switch (random2(3))
++    {
++    case 0:
++
++        god_speaks(GOD_IVES, "A strange hole emerges on the floor.");
++        you.do_shaft();
++        break;
++    case 1:
++        _IVES_summon(1); // obelisk
++        break;
++    case 2:
++        simple_god_message(" coagulates space around you!",GOD_IVES);
++        slow_player(100);
++        break;
++    case 3:
++        simple_god_message(" anchors you in the plane!", GOD_IVES);
++        you.set_duration(DUR_DIMENSION_ANCHOR, 250);
++        break;
++    case 4: // crystal guardians
++        _IVES_summon(2);
++        break;
++    }
++
++    return true;
++
++}
+ 
+ bool divine_retribution(god_type god, bool no_bonus, bool force)
+ {
+@@ -1739,7 +1813,7 @@ bool divine_retribution(god_type god, bool no_bonus, bool force)
+     case GOD_CHEIBRIADOS:   do_more = _cheibriados_retribution(); break;
+     case GOD_DITHMENOS:     do_more = _dithmenos_retribution(); break;
+     case GOD_QAZLAL:        do_more = _qazlal_retribution(); break;
+-
++    case GOD_IVES:          do_more = _ives_retribution(); break;
+     case GOD_ASHENZARI:
+     case GOD_GOZAG:
+     case GOD_RU:
+@@ -1952,3 +2026,5 @@ void gozag_incite(monster *mon)
+     if (success)
+         view_update_at(mon->pos());
+ }
++
++
+diff --git a/crawl-ref/source/mon-death.cc b/crawl-ref/source/mon-death.cc
+index 70c2a69..c3a5dc7 100644
+--- a/crawl-ref/source/mon-death.cc
++++ b/crawl-ref/source/mon-death.cc
+@@ -1718,6 +1718,10 @@ static void _fire_kill_conducts(monster &mons, killer_type killer,
+     //  messages appears.)
+     if (mons_is_fiery(&mons))
+         did_kill_conduct(DID_KILL_FIERY, mons);
++    // IVES hates blinkies
++    if(mons.is_spaceting()){
++        did_kill_conduct(DID_KILL_SPACETEARER, mons);
++    }
+ }
+ 
+ int monster_die(monster* mons, const actor *killer, bool silent,
+diff --git a/crawl-ref/source/mon-ench.cc b/crawl-ref/source/mon-ench.cc
+index 92cc66e..9165091 100644
+--- a/crawl-ref/source/mon-ench.cc
++++ b/crawl-ref/source/mon-ench.cc
+@@ -1067,6 +1067,10 @@ void monster::remove_enchantment_effect(const mon_enchant &me, bool quiet)
+             simple_monster_message(this, " is no longer deflecting missiles.");
+         break;
+ 
++    case ENCH_DIMENSION_ANCHOR:
++        if (!quiet)
++            simple_monster_message(this, " is no longer anchored to this plane.");
++        break;
+     case ENCH_CONDENSATION_SHIELD:
+         if (!quiet && you.can_see(this))
+         {
+diff --git a/crawl-ref/source/mon-pick-data.h b/crawl-ref/source/mon-pick-data.h
+index 0558a8a..42c3db1 100644
+--- a/crawl-ref/source/mon-pick-data.h
++++ b/crawl-ref/source/mon-pick-data.h
+@@ -490,6 +490,7 @@ static const pop_entry pop_crypt[] =
+   {  2,  5,   95, SEMI, MONS_SHADOW_WRAITH },
+   {  2,  7,   40, SEMI, MONS_REAPER },
+   {  2,  7,   55, PEAK, MONS_LICH },
++  {  2,  7,   55, PEAK, MONS_DEATHS_HAND },
+   {  3,  7,   15, PEAK, MONS_ANCIENT_LICH },
+   { 0,0,0,FLAT,MONS_0 }
+ };
+@@ -506,6 +507,7 @@ static const pop_entry pop_tomb[] =
+   { -1,  9,  335, SEMI, MONS_MUMMY_PRIEST },
+   {  4,  5,    3, RISE, MONS_GREATER_MUMMY },
+   {  3,  5,    6, FLAT, MONS_LICH },
++  {  3,  5,    3, FLAT, MONS_DEATHS_HAND },
+   {  3,  5,    3, SEMI, MONS_ANCIENT_LICH },
+   {  1,  5,  200, FLAT, MONS_ANUBIS_GUARD },
+   {  1,  5,  200, FLAT, MONS_USHABTI },
+@@ -688,6 +690,7 @@ static const pop_entry pop_tar[] =
+   {  1,  7,  230, SEMI, MONS_GHOST_CRAB },
+   {  1,  7,   89, FLAT, MONS_DEATH_DRAKE },
+   {  1,  7,   89, SEMI, MONS_SHADOW_DRAGON },
++  {  1,  9,  125, PEAK, MONS_DEATHS_HAND },
+   { 0,0,0,FLAT,MONS_0 }
+ };
+ 
+@@ -827,6 +830,7 @@ static const pop_entry pop_abyss[] =
+   {  1,  5,    9, FLAT, MONS_REVENANT },
+   {  1,  5,   46, FLAT, MONS_LICH },
+   {  1,  5,    8, FLAT, MONS_ANCIENT_LICH },
++  {  1,  5,    9, FLAT, MONS_DEATHS_HAND },
+   // Thematic branch representatives, outsiders
+   {  1,  5,    8, FLAT, MONS_ORC_SORCERER },
+   {  1,  5,    4, FLAT, MONS_DEEP_ELF_PRIEST },
+diff --git a/crawl-ref/source/mon-util.cc b/crawl-ref/source/mon-util.cc
+index 4ac0d49..98208f8 100644
+--- a/crawl-ref/source/mon-util.cc
++++ b/crawl-ref/source/mon-util.cc
+@@ -675,6 +675,15 @@ bool mons_is_fiery(const monster* mon)
+            || mon->has_spell_of_type(SPTYP_FIRE);
+ }
+ 
++// IVES hates translocational creatures/casters
++bool mons_is_spacetearer(const monster* mon)
++{
++    return mon->has_attack_flavour(AF_DISTORT)
++           || mon->has_attack_flavour(AF_CHAOS)
++           || mon->has_attack_flavour(AF_BLINK)
++           || mon->has_spell_of_type(SPTYP_TRANSLOCATION);
++}
++
+ bool mons_is_projectile(monster_type mc)
+ {
+     return mons_class_flag(mc, M_PROJECTILE);
+diff --git a/crawl-ref/source/mon-util.h b/crawl-ref/source/mon-util.h
+index 006e7ac..a3d963d 100644
+--- a/crawl-ref/source/mon-util.h
++++ b/crawl-ref/source/mon-util.h
+@@ -387,6 +387,7 @@ bool herd_monster(const monster* mon);
+ int cheibriados_monster_player_speed_delta(const monster* mon);
+ bool cheibriados_thinks_mons_is_fast(const monster* mon);
+ bool mons_is_fiery(const monster* mon);
++bool mons_is_spacetearer(const monster* mon);
+ bool mons_is_projectile(monster_type mc);
+ bool mons_is_projectile(const monster* mon);
+ bool mons_is_boulder(const monster* mon);
+diff --git a/crawl-ref/source/monster.cc b/crawl-ref/source/monster.cc
+index adf8f34..7de5dd5 100644
+--- a/crawl-ref/source/monster.cc
++++ b/crawl-ref/source/monster.cc
+@@ -4318,6 +4318,9 @@ bool monster::no_tele(bool calc_unid, bool permit_id, bool blinking) const
+     if (has_notele_item(calc_unid))
+         return true;
+ 
++    if (get_ench(ENCH_DIMENSION_ANCHOR).duration>0)
++        return true;
++
+     return false;
+ }
+ 
+@@ -5576,11 +5579,23 @@ static bool _mons_is_fiery(int mc)
+            || mc == MONS_ORB_OF_FIRE;
+ }
+ 
++static bool _mons_is_spacetearing(int mc)
++{
++    return mc == MONS_WORLDBINDER
++        || mc == MONS_CORRUPTER;
++}
++
+ bool monster::is_fiery() const
+ {
+     return _mons_is_fiery(type);
+ }
+ 
++bool monster::is_spaceting() const
++{
++    return _mons_is_spacetearing(type) || mons_is_spacetearer(this);
++}
++
++
+ static bool _mons_is_skeletal(int mc)
+ {
+     return mc == MONS_SKELETON
+diff --git a/crawl-ref/source/monster.h b/crawl-ref/source/monster.h
+index adaa8bc..57ab306 100644
+--- a/crawl-ref/source/monster.h
++++ b/crawl-ref/source/monster.h
+@@ -403,6 +403,7 @@ public:
+ 
+     bool is_icy() const;
+     bool is_fiery() const;
++    bool is_spaceting() const;
+     bool is_skeletal() const;
+     bool is_spiny() const;
+     bool paralysed() const;
+diff --git a/crawl-ref/source/player-equip.cc b/crawl-ref/source/player-equip.cc
+index 4e36716..290e61a 100644
+--- a/crawl-ref/source/player-equip.cc
++++ b/crawl-ref/source/player-equip.cc
+@@ -369,6 +369,8 @@ static void _equip_use_warning(const item_def& item)
+         mpr("You really shouldn't be using a poisoned item like this.");
+     else if (is_fiery_item(item) && you_worship(GOD_DITHMENOS))
+         mpr("You really shouldn't be using a fiery item like this.");
++    else if (is_spacetearing_item(item) && you_worship(GOD_DITHMENOS))
++        mpr("You really shouldn't be using distortional weapon like this.");
+ }
+ 
+ static void _wield_cursed(item_def& item, bool known_cursed, bool unmeld)
+diff --git a/crawl-ref/source/player-reacts.cc b/crawl-ref/source/player-reacts.cc
+index 5f08a22..3522c4c 100644
+--- a/crawl-ref/source/player-reacts.cc
++++ b/crawl-ref/source/player-reacts.cc
+@@ -412,6 +412,7 @@ void player_reacts_to_monsters()
+                          (2 * BASELINE_DELAY), true);
+     }
+ 
++    if(you_worship(GOD_IVES) && you.piety>=piety_breakpoint(1)) IVES_dimensional_anchoring(); // handle IVES' anchoring
+     handle_starvation();
+     _decrement_paralysis(you.time_taken);
+     _decrement_petrification(you.time_taken);
+@@ -1051,8 +1052,12 @@ static void _decrement_durations()
+     _decrement_a_duration(DUR_WEAK, delay,
+                           "Your attacks no longer feel as feeble.");
+ 
+-    _decrement_a_duration(DUR_DIMENSION_ANCHOR, delay,
++    if(!you_worship(GOD_IVES))
++        {
++        _decrement_a_duration(DUR_DIMENSION_ANCHOR, delay,
+                           "You are no longer firmly anchored in space.");
++        }
++    else{ you.duration[DUR_DIMENSION_ANCHOR] = 10; }
+ 
+     _decrement_a_duration(DUR_SICKENING, delay);
+ 
+diff --git a/crawl-ref/source/player.cc b/crawl-ref/source/player.cc
+index fb98f4a..b8043ae 100644
+--- a/crawl-ref/source/player.cc
++++ b/crawl-ref/source/player.cc
+@@ -2245,6 +2245,26 @@ static int _player_para_evasion_bonuses(ev_ignore_type evit)
+     return evbonus;
+ }
+ 
++
++/**
++*
++* IVES' EV-boosts
++*
++**/
++static int _IVES_EV_boost(int piety)
++{
++
++  if (!you_worship(GOD_IVES) || you.penance[GOD_IVES])
++        return 0;
++    if (piety < piety_breakpoint(0))
++        return 0;
++    if (piety >= piety_breakpoint(5))
++        return 12;
++    return 2 + (piety) / 20;
++
++}
++
++
+ // Player EV bonuses for various effects and transformations. This
+ // does not include tengu/merfolk EV bonuses for flight/swimming.
+ static int _player_evasion_bonuses(ev_ignore_type evit)
+@@ -2272,6 +2292,9 @@ static int _player_evasion_bonuses(ev_ignore_type evit)
+     if (player_mutation_level(MUT_SLOW_REFLEXES))
+         evbonus -= player_mutation_level(MUT_SLOW_REFLEXES) * 3;
+ 
++    if (you_worship(GOD_IVES))
++        evbonus += _IVES_EV_boost(you.piety);
++
+     return evbonus;
+ }
+ 
+diff --git a/crawl-ref/source/religion.cc b/crawl-ref/source/religion.cc
+index 72018a1..5d2bd10 100644
+--- a/crawl-ref/source/religion.cc
++++ b/crawl-ref/source/religion.cc
+@@ -365,6 +365,13 @@ const char* god_gain_power_messages[NUM_GODS][MAX_GOD_ABILITIES] =
+       "gather your power into a mighty leap",
+       "wreak a terrible wrath on your foes"
+     },
++      //IVES
++    { "You are protected from banishment and you are more difficult to hit",
++      "Your enemies are bound in space if they come adjacent to you",
++      "ignore gravity at will",
++      "drive summoned presences out of your field of vision",
++      "create an almighty repulsion, knocking enemies away from you"
++    },
+ };
+ 
+ /**
+@@ -510,6 +517,13 @@ const char* god_lose_power_messages[NUM_GODS][MAX_GOD_ABILITIES] =
+       "gather your power into a mighty leap",
+       "wreak a terrible wrath on all visible foes"
+     },
++       //IVES
++    { "You no longer are protected from banishment",
++      "anchor your enemies into space",
++      "ignore gravity at will",
++      "drive away summoned creatures",
++      "push away foes with almight repulsion"
++    },
+ };
+ 
+ static void _place_delayed_monsters();
+@@ -667,6 +681,9 @@ string get_god_likes(god_type which_god, bool verbose)
+       likes.emplace_back("you make personal sacrifices");
+       break;
+ 
++    case GOD_IVES:
++        likes.emplace_back("explore the continuum");
++        break;
+     default:
+         break;
+     }
+@@ -861,6 +878,9 @@ string get_god_likes(god_type which_god, bool verbose)
+         really_likes.emplace_back("you kill beings that bring fire to the "
+                                   "dungeon");
+         break;
++    case GOD_IVES:
++        really_likes.emplace_back("you kill warpers of space-time");
++        break;
+     default:
+         break;
+     }
+@@ -950,6 +970,11 @@ string get_god_dislikes(god_type which_god, bool /*verbose*/)
+         dislikes.emplace_back("you use fiery magic or items");
+         break;
+ 
++    case GOD_IVES:
++        dislikes.emplace_back("you use items that harm the continuum");
++        dislikes.emplace_back("you use translocational magic or magic that brings"
++                              "creatures from other planes");
++        break;
+     default:
+         break;
+     }
+@@ -1348,7 +1373,7 @@ static monster_type _yred_servants[] =
+     MONS_MUMMY, MONS_WIGHT, MONS_FLYING_SKULL, MONS_WRAITH,
+     MONS_VAMPIRE, MONS_PHANTASMAL_WARRIOR, MONS_SKELETAL_WARRIOR,
+     MONS_FLAYED_GHOST, MONS_DEATH_COB, MONS_GHOUL, MONS_BONE_DRAGON,
+-    MONS_PROFANE_SERVITOR, MONS_DEATHS_HAND
++    MONS_PROFANE_SERVITOR
+ };
+ 
+ #define MIN_YRED_SERVANT_THRESHOLD 3
+@@ -2064,6 +2089,7 @@ string god_name(god_type which_god, bool long_name)
+     case GOD_GOZAG:         return "Gozag";
+     case GOD_QAZLAL:        return "Qazlal";
+     case GOD_RU:            return "Ru";
++    case GOD_IVES:          return "IVES";
+     case GOD_JIYVA: // This is handled at the beginning of the function
+     case NUM_GODS:          return "Buggy";
+     }
+@@ -2505,6 +2531,10 @@ static void _gain_piety_point()
+ 
+                     you.one_time_ability_used.set(you.religion);
+                     break;
++                case GOD_IVES:
++                    simple_god_message(" will now allow to teleport to anywhere... once.");
++                    break;
++
+                 default:
+                     break;
+             }
+@@ -3005,7 +3035,15 @@ void excommunication(god_type new_god, bool immediate)
+         }
+         _set_penance(old_god, 25);
+         break;
+-
++    case GOD_IVES:
++        if (you.duration[DUR_DIMENSION_ANCHOR])
++        {
++            mprf(MSGCH_DURATION,
++                "You feel less bound to geometry of this plane.");
++            you.duration[DUR_DIMENSION_ANCHOR] = 0;
++        }
++        _set_penance(old_god,40);
++        break;
+     case GOD_CHEIBRIADOS:
+     default:
+         _set_penance(old_god, 25);
+@@ -3437,7 +3475,11 @@ void join_religion(god_type which_god, bool immediate)
+             if (you.skills[sk])
+                 you.train[sk] = 0;
+     }
+-
++    // IVES' dimension lock
++    if (you_worship(GOD_IVES))
++    {
++            simple_god_message(" locks you in space.");
++    }
+     // Move gold to top of piles with Gozag.
+     if (you_worship(GOD_GOZAG))
+         add_daction(DACT_GOLD_ON_TOP);
+@@ -3923,6 +3965,9 @@ bool god_hates_spell(spell_type spell, god_type god, bool rod_spell)
+         if (is_fiery_spell(spell))
+             return true;
+         break;
++    case GOD_IVES:
++        if (is_spacetearing_spell(spell)) return true;
++        break;
+     default:
+         break;
+     }
+@@ -3935,6 +3980,8 @@ bool god_loathes_spell(spell_type spell, god_type god)
+         return true;
+     if (spell == SPELL_STATUE_FORM && god == GOD_YREDELEMNUL)
+         return true;
++    if (spell == SPELL_SINGULARITY && god == GOD_IVES)
++        return true;
+     return false;
+ }
+ 
+@@ -3953,6 +4000,8 @@ bool god_hates_ability(ability_type ability, god_type god)
+             return god == GOD_DITHMENOS;
+         case ABIL_EVOKE_BERSERK:
+             return god == GOD_CHEIBRIADOS;
++        case ABIL_BLINK:
++            return god == GOD_IVES;
+         default:
+             break;
+     }
+@@ -4071,7 +4120,6 @@ void handle_god_time(int /*time_delta*/)
+             if (one_chance_in(35))
+                 lose_piety(1);
+             break;
+-
+         case GOD_ELYVILON:
+             if (one_chance_in(50))
+                 lose_piety(1);
+@@ -4081,7 +4129,10 @@ void handle_god_time(int /*time_delta*/)
+             if (one_chance_in(100))
+                 lose_piety(1);
+             break;
+-
++        case GOD_IVES:
++            if (one_chance_in(18))
++                lose_piety(1);
++            break;
+         case GOD_FEDHAS:
+         case GOD_CHEIBRIADOS:
+             // These gods do not lose piety  over time but we need a case here
+@@ -4162,7 +4213,8 @@ int god_colour(god_type god) // mv - added
+     case GOD_QAZLAL:
+     case GOD_RU:
+         return BROWN;
+-
++    case GOD_IVES:
++        return BLUE;
+     case GOD_NO_GOD:
+     case NUM_GODS:
+     case GOD_RANDOM:
+@@ -4247,6 +4299,9 @@ colour_t god_message_altar_colour(god_type god)
+     case GOD_RU:
+         return BROWN;
+ 
++    case GOD_IVES:
++        return coinflip() ? BLUE : LIGHTBLUE;
++
+     default:
+         return YELLOW;
+     }
+diff --git a/crawl-ref/source/rltiles/dc-feat.txt b/crawl-ref/source/rltiles/dc-feat.txt
+index d347e3a..a4873b7 100644
+--- a/crawl-ref/source/rltiles/dc-feat.txt
++++ b/crawl-ref/source/rltiles/dc-feat.txt
+@@ -460,6 +460,7 @@ qazlal0 DNGN_ALTAR_QAZLAL
+ qazlal1
+ qazlal2
+ ru DNGN_ALTAR_RU
++ives DNGN_ALTAR_IVES
+ unknown DNGN_UNKNOWN_ALTAR
+ 
+ %sdir dngn
+diff --git a/crawl-ref/source/rltiles/dc-invocations.txt b/crawl-ref/source/rltiles/dc-invocations.txt
+index e0aa2c4..673e2d1 100644
+--- a/crawl-ref/source/rltiles/dc-invocations.txt
++++ b/crawl-ref/source/rltiles/dc-invocations.txt
+@@ -88,3 +88,7 @@ zin_imprison ABILITY_ZIN_IMPRISON
+ zin_recite ABILITY_ZIN_RECITE
+ zin_sanctuary ABILITY_ZIN_SANCTUARY
+ zin_vitalisation ABILITY_ZIN_VITALISATION
++ives_antigravity ABILITY_IVES_ANTIGRAVITY
++ives_abjuration ABILITY_IVES_ABJURATION
++ives_greatertele ABILITY_IVES_GREATERTELE
++ives_repulsion_blast ABILITY_IVES_REPULSION_BLAST
+diff --git a/crawl-ref/source/rltiles/dngn/altars/ives.png b/crawl-ref/source/rltiles/dngn/altars/ives.png
+new file mode 100644
+index 0000000000000000000000000000000000000000..aa0037d9d08e3d900894da323fa1f1df81074330
+GIT binary patch
+literal 871
+zcmV-t1DO1YP)<h;3K|Lk000e1NJLTq001BW001Be1^@s6b9#F800006VoOIv00000
+z008+zyMF)x010qNS#tmY3ljhU3ljkVnw%H_000McNliru-vkg86Ag}3!-fC=0`y5l
+zK~z}7y_a7|Q&AkpzxU#!<?2Oo4nrm(_$Wq%wDvGc47MJI1wI7+dFd^+qKBx^vSmHg
+zQ=3nLib6B|lS$k*B!*)?6pIm#Q09&5VQ%XC?Lp7++@1T+d!Zi;?w@n{e9!lH&hK{y
+zI1k0i$D&iXq9~3;I1!+XzM296JbF24TZCN!O8oN%T3Xxa1G^$b2eu=Z&8S}35h2=v
+z&n5D@1CA>~v@>%O_ilBge=q_mVc!YSE<EV-qJJ;~0BH8saU%L|KeHr4w7TH*;H8U0
+zjzox7w;CG+{^t1*T*-*02v0+UB@w0$uv@JXPOi;F*mZ!;KIrr6!b!N25yWI|5k`wr
+zv^sk>=PbM+m*{n`TU$h7d)wX`$YnF!f^#L+@DEcXmPF`<U}Qhp=SFZ6SFYcO$L*r`
+zF?k5R?t}3g`QK>v)*(7R%rOO{eNW)geLwoDB^CU{jRW}1RUkZn@O*FbNJK#{;Uh*=
+zA`<Uka7?`v2!bFOS~t76j@iX^gy)a02L^7^_pBQQxugj<a)3H<xQ{hmSgyH7@8jJy
+zSXzkFdy=w(T*C77s4mN_4hV;NLtnLo=)PYy!^`D&9K0ZxEW@ohVCqC?SIE}Pk1N1X
+z1PM~0tiq4mj#cR(rPm4EayMjtSX=$U)qfVAlG2sm!AT0ZRtx|S?mWf0j<a0OQ&Jj@
+zXBt&wzojQ^FG3E^o&m=mPaxbApetVsUf)y;0EQ{4GJ><f%C;Qt31H^!3eNl6IXD4(
+z+%9x>h2U|!5FH;@tQI2f_(ftakw?(y#atqfrG+>*^M_-1Y5Qi!k_cUDHthx6srSpO
+zq$y@)A&vT`TKxL?2LSMOEvDP1$(XIpEtLO$QgN&F+Ay*F^r@3*X>CI;n?Z4BmyQW^
+zwc|pEpF1zGm6C{Hg_@;6Q4|GFUQes?Uik+E0E#=iD3{BY3J4LBlG2<5f?59AbP#89
+x*$f~6#hpE5zi-m_qy~_MsTHOI@PC4G{{a`_;bp<L?N$H)002ovPDHLkV1mtGi>v?u
+
+literal 0
+HcmV?d00001
+
+diff --git a/crawl-ref/source/rltiles/gui/invocations/ives_abjuration.png b/crawl-ref/source/rltiles/gui/invocations/ives_abjuration.png
+new file mode 100644
+index 0000000000000000000000000000000000000000..f69926b67e3a4471312b76a872c28ecccdb7961b
+GIT binary patch
+literal 619
+zcmV-x0+juUP)<h;3K|Lk000e1NJLTq001BW001Be1^@s6b9#F800006VoOIv0RI60
+z0RN!9r;`8x010qNS#tmY3ljhU3ljkVnw%H_000McNliru-vkj7CJT8tztR8z0r*Ko
+zK~z}7%~m^Z!axvxLGH0Q0+r*!Y<ddUQSOi{ASc(r;xH&R1?iBCQ$Q+iKx9rZDeN`g
+z_5N(Ekda1f*j?}V&D%Ev+}R#<6Wi^UhB{=o+hMU-D9`dt8|U-+AOSGOv~#0-r{GTl
+z@O@u9=Q+P+odF>Oo@e&8A31Q?120bifTAeO0XPvZWJtz93V@Eep4E@Da$P9qeYIM(
+z&Zvo51>ojEL_|agqL$bHJG_T6MrsbMGxy|ve_h=*jX`ALK*)eoJ0r=s9G4UG8Fb9?
+z_ESEm7fsN{0H$hfO8FQ>Rt~rz!f%HAEvQi8NC0TT2>{7we*OBXR%peW;Y7j{2_)26
+zO+voDGYNHe*o!b5MtS`(DR_SsNW_UIjLqEh^@F8AlM*6wf?W1Ej_LMV5JcsdE68Xw
+zjzGTvxL9$>`PfCoIv1m+RYk@{KWro%*&xO`D>Z<-EKnDXW}HYVy>bdXtJXKaRwL1=
+zYOf<A-8oQwU2-N65tb8xsQj%%$=am!x`ve}XX>@DyAo>5RvmA@1rnsHvRrBr)MePh
+z1+UpU`@WB&DC+!dHXEV0lgqNL)^lA@wdJNpwb{cF)|s(At6eo;?dAC%wk?+t=pn~$
+z9FSTxQ)^~y#d-%IktmhMTg@0i9LGZ4<|NfU>*oKp{Q^=mfq1q+rbqw)002ovPDHLk
+FV1m)F4{`ti
+
+literal 0
+HcmV?d00001
+
+diff --git a/crawl-ref/source/rltiles/gui/invocations/ives_antigravity.png b/crawl-ref/source/rltiles/gui/invocations/ives_antigravity.png
+new file mode 100644
+index 0000000000000000000000000000000000000000..e8de9af82144e4816bcb8cdf7a9c547a8de65810
+GIT binary patch
+literal 579
+zcmV-J0=)f+P)<h;3K|Lk000e1NJLTq001BW001Be1^@s6b9#F800006VoOIv0CE8B
+z0RQ%Bq^<w}010qNS#tmY3ljhU3ljkVnw%H_000McNliru-vkj7B^jZkoml_?0nkZA
+zK~z}7%~w5cgD@0+sgOE!2nVRDigut2Wv#@(&?9v0AtL6S!O9`B(IaGFh?IqeF6ok}
+zin>;Up+hD*7=w-ffDni!D~=rezW2S)A1?qSkBMw!y<X>i1&QMrX0w?vmZ5sk^SoXF
+zxUMVRyBfO$g8(p1b6fyvno9SKz6B>6i^YPAQ3|sFFz9q$H@`p;+RphS)?%<eFh>CI
+zudNSZ#@DC%*&+tH8N3lKR{*#7czyT4?pc+Y<=cd})u-p`%bwEQVTV6|zPX#h0#Id7
+z4y3ZD1D1enr((gHXvq{?F=2r)P#hHeVh}Ia;={r?fz1)GQAPnj>~Qu}g7Om7nIM^4
+z6F`dkGxXPW;6F;u$!Mh90z@!{l7Y7y{%0S5z%!t+XFUL_j!1VCbT^<g12r~+DbE7Q
+z9%aqM*Qg(mF@i)aw8)+=!AVve#tG!x1j0D!{DwRUz~+e6PlPx4y8vaFdY$4$F~lX9
+zqt<!=+i4{_5<^~s<qFRxY!H*$=lZP4xr!FN+q9jN8WMwUolVn(G)>F;L{W6Mwp`Vy
+z(mk9$domkj+m8_m-VKcRw-ID#07VegLwQDTN|g-wzR&!rAR?8mW&0OB{sFPL`GamL
+R6d?cr002ovPDHLkV1o94`b7W$
+
+literal 0
+HcmV?d00001
+
+diff --git a/crawl-ref/source/rltiles/gui/invocations/ives_repulsion_blast.png b/crawl-ref/source/rltiles/gui/invocations/ives_repulsion_blast.png
+new file mode 100644
+index 0000000000000000000000000000000000000000..7ad7fdc79f6019b2db2c02493aa2e4f65bbb5d8b
+GIT binary patch
+literal 611
+zcmV-p0-XJcP)<h;3K|Lk000e1NJLTq001BW001Be1^@s6b9#F800006VoOIv00000
+z008+zyMF)x010qNS#tmY3ljhU3ljkVnw%H_000McNliru-vkl>5F^NmUabHC0q{vg
+zK~z}7%~w6H!Y~YWo;o7bffIB`$^csjZotGj%2DV!n0f;SwsvFh2^cEG9tP?*Y3(>b
+z-{V=TTII)f{MnyVfG>;UCeG)xnaW62Rj}XhNn4R`W16OuIH0v==c2c@7Ug(syM9^C
+z&qqf?gM#5Wj(@>{<%)h2(lm`90x{t*+-M}}^C_DH<o4RSRduPH=o}7*k&P}fTL=74
+zQPShJd2N0BXswM5ft_gEb$>cbvN^G@Hf~-}2^(AmMcFG$6lB-liF{!}!HoNi%ML78
+zPrPf>;qEB6gdE3xMC7nC!g!!PdA?9^ypNTogR$MLUoTZgBpIe;H{%sk4sv?N4h+jp
+z*c>cGY4Q*-tj2}Y7z0Wv|N3N{lsp7Q*+n3m1LQZR)I8!;#I4uUMPNwJ9T5rS0RZNB
+zcZtUs<DKUSiYKC?d}4+VaVqCRp_CYfP8Y!m(WmV+w2a^50gHgdQVV5Mszb8P2pdh!
+z<C<MPnBzVow=f6%5x7)O?-QBx$?-(7y&#;5?a<XGtQXkOZP%m|VGw-%J}{(cyEKO#
+z&K}2ap%pt2XsscRV`!SD!{>B5iRC%Ek`YxyUCVtJRr?MnXLvxRV7RBf6(g??-+%gF
+xfEWj0J^i22M6~U7V6)jc^@>T#eRK2wS{~W|gb{mM^oIZd002ovPDHLkV1mQ63RwUE
+
+literal 0
+HcmV?d00001
+
+diff --git a/crawl-ref/source/rltiles/mon/entropy_weaver.png b/crawl-ref/source/rltiles/mon/entropy_weaver.png
+index 3aaa603c7fde5fb3d34ca1b13e8fae6a9f120c35..9e660013d5de9d813680e8c1fc5e966b49d9a6b6 100644
+GIT binary patch
+delta 1888
+zcmV-m2cP(b1LO{n8Gi-<0047(dh`GQ00v@9M??Vs0RI60puMM)00009a7bBm000XU
+z000XU0RWnu7ytkO2XskIMF-ym5f=;%`ScVd000K@Nkl<ZSi_x{e@LA79mijfT!Sl@
+zgCMy+o84xv*Emh}P93t0(@?e3V!Nb}tgyDsa5j>~A#B2WFn=gQK?g1oq7jlw2Cjd!
+zmc(?prfr&WdTWcV`uLbwl3veicE-!C?vF&Wp@Gl-c<y<89`6ieUpSt-?|tw4dEe*9
+z`~CSSBErMg+@BPwKI+_?J#Rcem^PljJtGSL?-G%m*X(&jW_&Vx9sxu)MnyJ8B^3|I
+z&eGii+5PPKzJKFL-|@}Qd0*)|k#t?onY@O#8c)RoqU*Yx?hD8Z&+QXDg`%x2<Nz_j
+z*q^3x>ukEtu(1_@-S}1jx~>ag8JG1Dk@XR2@9B{Co(|brx_kS7KjRY<Kq?-{0a0Ma
+zxvJ6!#l=S4^#oOIMqHIgUIE~AUmz!Z!SWygyZ2P0D1VA5ijtd9)n8fpQT+XGQt<$a
+zI%U|JeL`H;!Qx^RbqYz>QI!P+kctQR*Zu8t$OHk<u-}iOC?c|%l;)q4bREhguaJrd
+zaxyxvi_8$XRj;w{DRj7BTUiioWkCkVhGlSUSY&-fn%bJht$K5FW5#EN(-DFhpA=M8
+z`mnpmTz}^N+Wotfwcd7so?opc7K_mx=|)@BIB{?X03V+H831n8i?5{-GbD3*B7ceN
+z2?{LNZ;Z11b-(qcQj-8rA=-`4xVLi8DA{j@0Eoq60F>-00buCTIsiMr7vbX%uJB^(
+z^JKII3q<u%Bb4_0%~fFkVE2Hzx+C4lH$#^3p?^#3ghC-sj=V##JV<gW$@s*$<2PMh
+zUA)-(Jc-L6Irbm-&m%KFSYF=T>^r`h1NInYV<>LbD@|?9j<`3qHA{O>hxl3=WpHd*
+zn%bIWaBNuIs#n~qSAP0ji`=`Lk#IO{-8*%qMgXysoK=QAHmLwCf8CF4j2a;kVeQ^O
+z0e?uOAMnhvw;ireE+qjtIr0vG!wXkGpXKb^Z!&PI7ugsk79F6jX$BEds@g=c=S0Cz
+zYO|C)<KuDvJhA8iQ&(y@IWoZI_oJw84~dWe&Zn2>2!%ofil*s2)@fak(H1z=dI*3Y
+zwN&8^R<M@N@cQq1(Wajz79Dt~6e!tpvwt#QsY#fj;k7plt%L4IJ;dfVV;YOa7@rs?
+zk$yl%Td?-M!3r|k0&D3^KHYKhLz^fCrs1keA9H#F5m7`$d2QG@=z8>9?0ssVWi(J^
+zNT9Z;0pL?zc!L!Vk9dO>xK*#yc)AYm)C+g&<@dj|F{VQYvWf-B;MlOZ)LpXo$A2|~
+zr%?QUzi2B9mIe%t4NH4Zhn0AC0x}8At$M|-1$IF)lQ2gx>`diScL|<C35Ubt_xp_t
+zv(;c$K~r0^_*xn*0O4@h%6<ncW*OAH-&9MB2NZRRR6Jl*!QRhMp1#e4`~OCdO<Uel
+z-5%?G=dn(Fs>=}u)9nMNdild2Pk-^=pTCQ&k09$K#3s)Wn>>?~7cNt=Bwa5CBSLDn
+zl%=GL>Ez4&b-0pf)K5H<B7Ec}=2vS86ixGL?=&TQN(hz*8J`%(r@F`hZ%zD#Xf(=&
+z3m2&PfyXlX?92biUj>eq?2ZA#@Aq3<@l48kA3pLD(P)$}7b6T^T4#J>+<yWQ3Wey7
+zbmvrsSq+k|Gd7l&9dhrWVji1RBwa^5ld@iR<90C$g+c%%my&3U8iQvC>F@2g!eOrr
+znej3A-jtJqXP=N<0NGsFT7I&6j;^jQqR}V-hwEM-P&Cb<)<Y!H4@fR0x%x?*SS&_=
+zZ$AzD{gxNps+XOuYugf$D}QgJ`nT^;`m0^kH~)~E*RHehh0#PDIB<YyG)g=kN7)fZ
+zTUoH^*r&SC7Bxbl5a%MbId|4aE;8Ahuw;HtPf%5z#{&S$)3>>K?K+e1e-1!J**q0x
+z^K^A}8Da4l3>p0PrkhPqn0j&blQ_wxB<CWv1j~c;o$lext&Yu3?SE(<Id-hO{~?h`
+z(EgiWpcK8Dn+u*o@D$Q{<T$?$AGSbfiyHH*wS4vN&-wK79P_KSoH)3H69;z?EDtiL
+zC#XJZqvfsbbhawQe7e+K2AOyYtqwUH4qGi6V9BwsrO}dTlQrF{*J4g{ez3P|Jam}I
+zf+#92k)qNP!BZ%@u78WJ>*DwO^MbG&w1e1gcwy^Mk@rv*gk2YOU6+Q21_ubc4wzJJ
+z>cw`GQ{J)66pHP<V0vO~Y|QXPHbmQr(d>D|*V33XMTtmm8CnC0eaOgW{pv~@06jL%
+zjT<+JL?Vu)wY7P?adETrJ^WT94f_ptHSaZ(P{}tPD~ckf(OJDu?c?UP>&WUk8k^5s
+zXKvlPwMp0UxRKBsqX0Zv*29-yyv~zlJ+wa)=Z%ZrO-dH$B%K2w?|AjUP1(xBe!JDM
+ax&8~|OMLj77|=%m0000<MNUMnLSTYl(w|=d
+
+delta 373
+zcmaFD*UCIWvYwfNfx%@-*D)Y9C%`Af6-YDl^RtMGvPw#_%E)l&=x`bua@*SS@bK_D
+zI}7;v35SM?L`F)arAg=K%M=#MS5_+2)+)EOXiS=<F=dLDmX?8pkENxh)s7vuatUs3
+zZXPF3daG6koIf9O=~A?IZ(?F%uI|)=f`T%=8FddI);H?U?=oE8*Vor?v}&fwrbUYu
+zEj8b{(em(a=aWZ{969NJ5eTlQ-@bM0*5^Ne7Bw~k-N(RK666=m;PC858i<qR?e4<R
+z!7A$k<Zu>vL>4nJa0`PlBg3pY5<o%r5>H=O_WLX>d@`a}vKAHsg_1m7978NlZ=IZH
+zD0V=B!?}3*o&R~VRvlg(Un9*X+p{n}aQnE{DahgfUaj5l8$D0|S@G;&Mi0{g9+Cg5
+ze?1-uG<;s&;JZNjVEIeNFvhzYS2nyj_EzlK<7w{=>nxg8Oy2J8s$$sN>A3$Pi)1>`
+OItEWyKbLh*2~7Yt^Ne-?
+
+diff --git a/crawl-ref/source/terrain.cc b/crawl-ref/source/terrain.cc
+index 0efecdd..3dfd7d7 100644
+--- a/crawl-ref/source/terrain.cc
++++ b/crawl-ref/source/terrain.cc
+@@ -464,6 +464,7 @@ static int _god_altars[][2] =
+     { GOD_GOZAG, DNGN_ALTAR_GOZAG },
+     { GOD_QAZLAL, DNGN_ALTAR_QAZLAL },
+     { GOD_RU, DNGN_ALTAR_RU },
++    { GOD_IVES, DNGN_ALTAR_IVES },
+ };
+ 
+ COMPILE_CHECK(ARRAYSZ(_god_altars) == NUM_GODS - 1);
+diff --git a/crawl-ref/source/tilepick.cc b/crawl-ref/source/tilepick.cc
+index 97d8686..7022480 100644
+--- a/crawl-ref/source/tilepick.cc
++++ b/crawl-ref/source/tilepick.cc
+@@ -443,6 +443,8 @@ tileidx_t tileidx_feature_base(dungeon_feature_type feat)
+         return TILE_DNGN_ALTAR_QAZLAL;
+     case DNGN_ALTAR_RU:
+         return TILE_DNGN_ALTAR_RU;
++    case DNGN_ALTAR_IVES:
++        return TILE_DNGN_ALTAR_IVES;
+     case DNGN_FOUNTAIN_BLUE:
+         return TILE_DNGN_BLUE_FOUNTAIN;
+     case DNGN_FOUNTAIN_SPARKLING:
+@@ -5445,9 +5447,16 @@ tileidx_t tileidx_ability(const ability_type ability)
+         return TILEG_ABILITY_RU_POWER_LEAP;
+     case ABIL_RU_APOCALYPSE:
+         return TILEG_ABILITY_RU_APOCALYPSE;
++    // IVES
++    case ABIL_IVES_ANTIGRAVITY:
++        return TILEG_ABILITY_IVES_ANTIGRAVITY;
++    case ABIL_IVES_ABJURATION:
++        return TILEG_ABILITY_IVES_ABJURATION;
++    case ABIL_IVES_GREATERTELE:
++        return TILEG_ABILITY_IVES_GREATERTELE;
++    case ABIL_IVES_REPULSION_BLAST:
++        return TILEG_ABILITY_IVES_REPULSION_BLAST;
+ 
+-    case ABIL_RU_SACRIFICE_PURITY:
+-        return TILEG_ABILITY_RU_SACRIFICE_PURITY;
+     case ABIL_RU_SACRIFICE_WORDS:
+         return TILEG_ABILITY_RU_SACRIFICE_WORDS;
+     case ABIL_RU_SACRIFICE_DRINK:
+-- 
+2.1.0
+
