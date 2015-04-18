@@ -879,3 +879,11 @@ Zin welcome
 
 Zin says: Spread the light, my child.
 %%%%
+IVES penance
+
+IVES says: Be cast to the abyss you love so much!
+%%%%
+IVES welcome
+
+IVES says: Protect the continuum!
+%%%%

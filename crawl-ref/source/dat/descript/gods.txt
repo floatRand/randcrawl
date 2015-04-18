@@ -1,4 +1,4 @@
-# Goals for the prose section: pitch the god to a player/potential worshipper.
+﻿# Goals for the prose section: pitch the god to a player/potential worshipper.
 # Why should they worship this god? What are the advantages & limitations?
 # What's 'cool' about this god?
 %%%%
@@ -185,6 +185,15 @@ intelligent beings. They must also tithe a fraction of all gold gained,
 preferably followed by donations of more. In exchange, worshippers may invoke
 Zin's wrath upon sinners, and eventually gain various divine protections. Zin's
 followers can convert to Elyvilon or the Shining One while keeping some piety.
+%%%%
+IVES
+
+IVES is god outside of space-time, keen on preserving and protecting its
+integrity. Followers of IVES are granted some significant powers, but as
+long as they refrain from using space-warping magic or items. One can earn IVES'
+appreciation by exploring the world and stabilizing the spacetime with their 
+presence. IVES has no interest in killing, but gladly accepts slaying of any 
+creature distorting space.
 %%%%
 Ashenzari powers
 
@@ -390,6 +399,15 @@ eventually find temporary safety in a divine refuge. As piety grows, followers
 will be protected from mutation, and Zin may even occasionally directly
 intervene to save a follower's life.
 %%%%
+IVES powers
+
+IVES anchors his followers in space, but in return, allows them various powers
+and boons. IVES' servants are coagulated in aura that protects them from 
+banishment and they can inflict anchor other creatures in space by striking them.
+Later on, IVES may grant his more devout followers ability to send back creatures
+summoned from other planes, although ability works on many conjured creatures as
+well. ( more to add )
+%%%%
 Ashenzari wrath
 
 Ashenzari's wrath is not like other gods'; it is constant and unrelenting for
@@ -543,3 +561,11 @@ Those under Zin's wrath will find their beneficial mutations stripped away,
 their bellies empty, their enemies alerted, and their senses confounded by the
 axioms of Law; confusion, fainting and complete paralysis will be their lot.
 %%%%
+IVES wrath
+
+Those who have transgressed agains IVES will find the spacetime against them.
+They will be anchored to space from time to time without gaining any benefits,
+their summoned creatures will be banished and the translocations will not work
+as they should.
+%%%%
+

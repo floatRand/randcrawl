@@ -2245,6 +2245,26 @@ static int _player_para_evasion_bonuses(ev_ignore_type evit)
     return evbonus;
 }
 
+
+/**
+*
+* IVES' EV-boosts
+*
+**/
+static int _IVES_EV_boost(int piety)
+{
+
+  if (!you_worship(GOD_IVES) || you.penance[GOD_IVES])
+        return 0;
+    if (piety < piety_breakpoint(0))
+        return 0;
+    if (piety >= piety_breakpoint(5))
+        return 12;
+    return 2 + (piety) / 20;
+
+}
+
+
 // Player EV bonuses for various effects and transformations. This
 // does not include tengu/merfolk EV bonuses for flight/swimming.
 static int _player_evasion_bonuses(ev_ignore_type evit)
@@ -2271,6 +2291,9 @@ static int _player_evasion_bonuses(ev_ignore_type evit)
     // transformation penalties/bonuses not covered by size alone:
     if (player_mutation_level(MUT_SLOW_REFLEXES))
         evbonus -= player_mutation_level(MUT_SLOW_REFLEXES) * 3;
+
+    if (you_worship(GOD_IVES))
+        evbonus += _IVES_EV_boost(you.piety);
 
     return evbonus;
 }

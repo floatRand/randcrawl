@@ -1067,6 +1067,10 @@ void monster::remove_enchantment_effect(const mon_enchant &me, bool quiet)
             simple_monster_message(this, " is no longer deflecting missiles.");
         break;
 
+    case ENCH_DIMENSION_ANCHOR:
+        if (!quiet)
+            simple_monster_message(this, " is no longer anchored to this plane.");
+        break;
     case ENCH_CONDENSATION_SHIELD:
         if (!quiet && you.can_see(this))
         {

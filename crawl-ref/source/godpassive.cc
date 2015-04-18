@@ -879,3 +879,4 @@ ru_interference get_ru_attack_interference_level()
     else
         return DO_NOTHING;
 }
+

@@ -403,6 +403,7 @@ public:
 
     bool is_icy() const;
     bool is_fiery() const;
+    bool is_spaceting() const;
     bool is_skeletal() const;
     bool is_spiny() const;
     bool paralysed() const;

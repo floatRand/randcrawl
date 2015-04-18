@@ -330,7 +330,10 @@ enum ability_type
     ABIL_RU_SACRIFICE_SKILL,
         ABIL_FINAL_SACRIFICE = ABIL_RU_SACRIFICE_SKILL,
     ABIL_RU_REJECT_SACRIFICES,
-
+    ABIL_IVES_ANTIGRAVITY,
+    ABIL_IVES_ABJURATION,
+    ABIL_IVES_GREATERTELE,
+    ABIL_IVES_REPULSION_BLAST,
     // For both Yred and Beogh
     ABIL_STOP_RECALL = 1500,
 
@@ -1227,6 +1230,9 @@ enum conduct_type
     DID_KILL_FIERY,                       // Dithmenos
     DID_SACRIFICE_LOVE,                   // Ru
 
+    DID_TEAR_SPACE,                       // IVES
+    DID_KILL_SPACETEARER,                 // IVES
+
     NUM_CONDUCTS
 };
 
@@ -1616,6 +1622,7 @@ enum dungeon_feature_type
     DNGN_ALTAR_QAZLAL,
     DNGN_ALTAR_RU,
 #endif
+    DNGN_ALTAR_IVES,
 
     DNGN_FOUNTAIN_BLUE,
     DNGN_FOUNTAIN_SPARKLING,           // aka 'Magic Fountain' {dlb}
@@ -2123,6 +2130,7 @@ enum god_type
     GOD_GOZAG,
     GOD_QAZLAL,
     GOD_RU,
+    GOD_IVES,
     NUM_GODS,                          // always after last god
 
     GOD_RANDOM = 100,

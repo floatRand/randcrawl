@@ -20,6 +20,7 @@
 #include "cloud.h"
 #include "colour.h"
 #include "coordit.h"
+#include "delay.h"
 #include "dactions.h"
 #include "database.h"
 #include "dgn-overview.h"
@@ -71,9 +72,11 @@
 #include "spl-transloc.h"
 #include "spl-util.h"
 #include "sprint.h"
+#include "stairs.h"
 #include "state.h"
 #include "stringutil.h"
 #include "target.h"
+#include "tileview.h"  // for IVES' ability
 #include "teleport.h" // monster_teleport
 #include "terrain.h"
 #include "throw.h"
@@ -82,6 +85,7 @@
 #endif
 #include "timed_effects.h"
 #include "traps.h"
+#include "unicode.h"
 #include "viewchar.h"
 #include "view.h"
 
@@ -6658,3 +6662,337 @@ bool ru_apocalypse()
     drain_player(100, false, true);
     return true;
 }
+
+
+/**
+*
+* IVES' abilities
+*
+**/
+
+bool IVES_dimensional_anchoring()
+{
+        monster* mons;
+        for (adjacent_iterator ai(you.pos()); ai; ++ai){
+            mons = monster_at(*ai);
+            if (!cell_is_solid(*ai) && monster_at(*ai))
+            {
+                mons->add_ench(mon_enchant(ENCH_DIMENSION_ANCHOR, 1, &you, 1 + you.piety / 6));
+            }
+        }
+        return true;
+}
+
+
+static int _IVES_abjurable(coord_def where, int pow, int, actor* agent)
+{
+    monster* mon = monster_at(where);
+    if (mon == nullptr || !mon->is_summoned() || mons_is_projectile(mon->type) || mon->friendly())
+        return 0;
+    return 1;
+}
+
+
+static int _IVES_abjure_enemy(coord_def where, int pow, int dummy, actor* agent)
+{
+
+    if (!_IVES_abjurable(where, pow, dummy, agent))
+        return 0;
+
+    monster* mon = monster_at(where);
+    ASSERT(mon);
+
+    const int abjdur = pow * 12;
+
+    int duration;
+    if (mon->is_summoned(&duration))
+    {
+        int sockage = max(fuzz_value(abjdur, 60, 30), 40);
+        dprf("%s abj: dur: %d, abj: %d",
+             mon->name(DESC_PLAIN).c_str(), duration, sockage);
+
+             mon_enchant abj = mon->get_ench(ENCH_ABJ);
+             if (!mon->lose_ench_duration(abj, sockage))
+             simple_monster_message(mon, " shudders as outside presences are purged.");
+    }
+
+    return 1;
+}
+
+bool IVES_antigravity()
+{
+       mpr("You start ignoring gravity.");
+       you.attribute[ATTR_PERM_FLIGHT] = 1;
+            float_player();
+            if (you.species == SP_TENGU) mpr("You feel very comfortable in the air.");
+        return true;
+}
+
+
+bool IVES_abjuration()
+{
+ int pow = 75 + you.skill_rdiv(SK_INVOCATIONS, 4) + you.piety / 4;
+ mpr("You harmonize the local space, purging foreign presences!");
+ apply_area_visible(_IVES_abjure_enemy, pow, &you);
+
+ return true;
+}
+
+
+static void _IVES_tele_to_level(const level_pos &pos)
+{
+    dungeon_feature_type stair_taken =
+        absdungeon_depth(pos.id.branch, pos.id.depth) > env.absdepth0 ?
+        DNGN_STONE_STAIRS_DOWN_I : DNGN_STONE_STAIRS_UP_I;
+
+    if (pos.id.depth == brdepth[pos.id.branch])
+        stair_taken = DNGN_STONE_STAIRS_DOWN_I;
+
+    if (!player_in_branch(pos.id.branch) && pos.id.depth == 1
+        && pos.id.branch != BRANCH_DUNGEON)
+    {
+        stair_taken = branches[pos.id.branch].entry_stairs;
+    }
+
+    if (is_connected_branch(pos.id.branch))
+        you.level_stack.clear();
+    else
+    {
+        for (int i = you.level_stack.size() - 1; i >= 0; i--)
+            if (you.level_stack[i].id == pos.id)
+                you.level_stack.resize(i);
+        if (!player_in_branch(pos.id.branch))
+            you.level_stack.push_back(level_pos::current());
+    }
+
+    const level_id old_level = level_id::current();
+
+    you.where_are_you = static_cast<branch_type>(pos.id.branch);
+    you.depth         = pos.id.depth;
+
+    leaving_level_now(stair_taken);
+    const bool newlevel = load_level(stair_taken, LOAD_ENTER_LEVEL, old_level);
+    tile_new_level(newlevel);
+    if (!crawl_state.test)
+        save_game_state();
+    new_level();
+    seen_monsters_react();
+    viewwindow();
+
+    // Tell stash-tracker and travel that we've changed levels.
+    trackers_init_new_level(true);
+}
+
+
+bool IVES_gateway()
+{
+    /** Based on wiz-code **/
+    string name;
+    mpr("All space unfolds before you. Where do you wish to go?");
+    const level_pos pos =
+        prompt_translevel_target(TPF_DEFAULT_OPTIONS, name);
+
+    if (pos.id.depth < 1
+        || (pos.id.depth > brdepth[pos.id.branch])
+        || (int)you.get_place_info(pos.id.branch).levels_seen < pos.id.depth
+            )
+    {
+        canned_msg(MSG_STRANGE_STASIS);
+        return false;
+    }
+
+    stop_delay(true);
+    run_animation(ANIMATION_BANISH, UA_BRANCH_ENTRY, false);
+
+    _IVES_tele_to_level(pos);
+    mpr("You pass through a gate. As you do so, it instantly collapses.");
+
+    you.one_time_ability_used.set(GOD_IVES);
+    take_note(Note(NOTE_GOD_GIFT, you.religion));
+
+    return true;
+}
+
+struct ives_dist_sorter
+{
+    coord_def pos;
+    bool operator()(const actor* a, const actor* b)
+    {
+        return a->pos().distance_from(pos) > b->pos().distance_from(pos);
+    }
+};
+
+void _IVES_repulsion_blast(actor* agent, coord_def target)
+{
+    /// Based on the Fan of Gales' code, although modified
+    vector<actor *> act_list;
+    int maxrange = 5;
+    int radius = min(maxrange, 2 + you.skill_rdiv(SK_INVOCATIONS,1,5) ); // max at 16 invoc
+    for (actor_near_iterator ai(agent->pos(), LOS_SOLID); ai; ++ai)
+    {
+        if (ai->is_stationary()
+            || ai->pos().distance_from(agent->pos()) > radius
+            || ai->pos() == agent->pos() // so it's never aimed_at_feet
+            )
+        {
+            continue;
+        }
+
+        act_list.push_back(*ai);
+    }
+    ives_dist_sorter sorter = {agent->pos()};
+    sort(act_list.begin(), act_list.end(), sorter);
+    bolt repulsion_beam;
+    repulsion_beam.hit             = AUTOMATIC_HIT;
+    repulsion_beam.pierce          = true;
+    repulsion_beam.affects_nothing = true;
+    repulsion_beam.source          = agent->pos();
+    repulsion_beam.range           = LOS_RADIUS;
+    repulsion_beam.is_tracer       = true;
+
+    map<actor *, coord_def> collisions;
+    counted_monster_list affected_monsters;
+
+    for (actor *act : act_list)
+    {
+        repulsion_beam.target = act->pos();
+        repulsion_beam.fire();
+        int push = radius - act->pos().distance_from(agent->pos()); // try to push everyone in roughly a circle?
+        if(push<0){ push=0; }
+        bool pushed = false;
+
+        for (unsigned int j = 0; j < repulsion_beam.path_taken.size() - 1 && push;
+             ++j)
+        {
+            if (repulsion_beam.path_taken[j] == act->pos())
+            {
+                coord_def newpos = repulsion_beam.path_taken[j+1];
+                if (!actor_at(newpos) && !cell_is_solid(newpos)
+                    && act->can_pass_through(newpos)
+                    && act->is_habitable(newpos))
+                {
+                    act->move_to_pos(newpos);
+                    pushed = true;
+                }
+                else //Try to find an alternate route to push
+                {
+                    bool success = false;
+                    for (adjacent_iterator di(newpos); di; ++di)
+                    {
+                        if (adjacent(*di, act->pos())
+                            && di->distance_from(agent->pos())
+                                == newpos.distance_from(agent->pos())
+                            && !actor_at(*di) && !cell_is_solid(*di)
+                            && act->can_pass_through(*di)
+                            && act->is_habitable(*di))
+                        {
+                            act->move_to_pos(*di);
+                            pushed = true;
+                            // Adjust repulsion path for moved monster
+                            repulsion_beam.target = *di;
+                            repulsion_beam.fire();
+                            success = true;
+                            break;
+                        }
+                    }
+
+                    // If no luck, they slam into something.
+                    if (!success)
+                        collisions.insert(make_pair(act, newpos));
+                }
+            }
+        }
+        if (pushed)
+        {
+            if (act->is_monster())
+            {
+                act->as_monster()->speed_increment -= random2(6) + 4;
+                if (you.can_see(act))
+                    affected_monsters.add(act->as_monster());
+            }
+        }
+    }
+    // cloud-moving is unchanged since it probably works fine
+    vector<int> cloud_list;
+    for (distance_iterator di(agent->pos(), true, true, radius + 2); di; ++di)
+    {
+        if (env.cgrid(*di) != EMPTY_CLOUD
+            && cell_see_cell(agent->pos(), *di, LOS_SOLID)
+            && target.origin())
+        {
+            cloud_list.push_back(env.cgrid(*di));
+        }
+    }
+
+    for (int i = cloud_list.size() - 1; i >= 0; --i)
+    {
+        repulsion_beam.target = env.cloud[cloud_list[i]].pos;
+        repulsion_beam.fire();
+
+        int dist = env.cloud[cloud_list[i]].pos.distance_from(agent->pos());
+        int push = (dist > 5 ? 2 : dist > 2 ? 3 : 4);
+
+        for (unsigned int j = 0;
+             j < repulsion_beam.path_taken.size() - 1 && push;
+             ++j)
+        {
+            if (env.cgrid(repulsion_beam.path_taken[j]) == cloud_list[i])
+            {
+                coord_def newpos = repulsion_beam.path_taken[j+1];
+                if (!cell_is_solid(newpos)
+                    && env.cgrid(newpos) == EMPTY_CLOUD)
+                {
+                    swap_clouds(newpos, repulsion_beam.path_taken[j]);
+                    --push;
+                }
+                else //Try to find an alternate route to push
+                {
+                    for (distance_iterator di(repulsion_beam.path_taken[j],
+                         false, true, 1); di; ++di)
+                    {
+                        if (di->distance_from(agent->pos())
+                                == newpos.distance_from(agent->pos())
+                            && *di != agent->pos() // never aimed_at_feet
+                            && !cell_is_solid(*di)
+                            && env.cgrid(*di) == EMPTY_CLOUD)
+                        {
+                            swap_clouds(*di, repulsion_beam.path_taken[j]);
+                            --push;
+                            repulsion_beam.target = *di;
+                            repulsion_beam.fire();
+                            j--;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    noisy(15, agent->pos());
+        mpr("You clear space, shunting everything outwards!");
+    if (!affected_monsters.empty())
+    {
+        const string message =
+            make_stringf("%s %s blown away by the repulsion.",
+                         affected_monsters.describe().c_str(),
+                         conjugate_verb("be", affected_monsters.count() > 1).c_str());
+        if (strwidth(message) < get_number_of_cols() - 2)
+            mpr(message);
+        else
+            mpr("The monsters around you are shunted away!");
+    }
+
+    for (auto it : collisions)
+        if (it.first->alive())
+            it.first->collide(it.second, agent, radius * 5);
+}
+
+bool IVES_repulsion()
+{
+    _IVES_repulsion_blast(&you, you.pos());
+    return true;
+}
+
+
+
+

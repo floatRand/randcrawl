@@ -384,6 +384,15 @@ static string _who_banished(const string &who)
 void banished(const string &who)
 {
     ASSERT(!crawl_state.game_is_arena());
+
+    // IVES might block banishment
+    if(you_worship(GOD_IVES)
+       && x_chance_in_y(you.piety, MAX_PIETY + 10))
+        {
+        simple_god_message(" stabilizes the space-time around you, preventing banishment!");
+            return;
+        }
+
     push_features_to_abyss();
     if (brdepth[BRANCH_ABYSS] == -1)
         return;
@@ -1594,6 +1603,8 @@ static void _increase_depth()
     int delta = you.time_taken * (you.abyss_speed + 40) / 200;
     if (!you_worship(GOD_CHEIBRIADOS) || you.penance[GOD_CHEIBRIADOS])
         delta *= 2;
+    if (you_worship(GOD_IVES) || you.penance[GOD_IVES])
+        delta = delta * 0.75;
     if (you.duration[DUR_TELEPORT])
         delta *= 5;
     const double theta = abyssal_state.phase;

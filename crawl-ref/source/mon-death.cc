@@ -1718,6 +1718,10 @@ static void _fire_kill_conducts(monster &mons, killer_type killer,
     //  messages appears.)
     if (mons_is_fiery(&mons))
         did_kill_conduct(DID_KILL_FIERY, mons);
+    // IVES hates blinkies
+    if(mons.is_spaceting()){
+        did_kill_conduct(DID_KILL_SPACETEARER, mons);
+    }
 }
 
 int monster_die(monster* mons, const actor *killer, bool silent,

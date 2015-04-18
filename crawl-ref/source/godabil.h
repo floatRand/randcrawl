@@ -155,4 +155,11 @@ void ru_do_retribution(monster* mons, int damage);
 void ru_draw_out_power();
 bool ru_power_leap();
 bool ru_apocalypse();
+
+bool IVES_dimensional_anchoring();
+bool IVES_abjuration();
+bool IVES_antigravity();
+bool IVES_gateway();
+bool IVES_repulsion();
+void _IVES_repulsion_blast(actor* agent, coord_def target);
 #endif

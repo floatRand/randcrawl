@@ -369,6 +369,8 @@ static void _equip_use_warning(const item_def& item)
         mpr("You really shouldn't be using a poisoned item like this.");
     else if (is_fiery_item(item) && you_worship(GOD_DITHMENOS))
         mpr("You really shouldn't be using a fiery item like this.");
+    else if (is_spacetearing_item(item) && you_worship(GOD_DITHMENOS))
+        mpr("You really shouldn't be using distortional weapon like this.");
 }
 
 static void _wield_cursed(item_def& item, bool known_cursed, bool unmeld)

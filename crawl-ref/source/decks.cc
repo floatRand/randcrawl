@@ -1400,6 +1400,8 @@ static void _suppressed_card_message(god_type god, conduct_type done)
 
         case DID_FIRE: forbidden_act = "fiery"; break;
 
+        case DID_TEAR_SPACE: forbidden_act = "space-tearing"; break;
+
         default: forbidden_act = "buggy"; break;
     }
 
@@ -1570,6 +1572,12 @@ static void _damnation_card(int power, deck_rarity_type rarity)
         return;
     }
 
+    if (you_worship(GOD_IVES))
+    {
+        _suppressed_card_message(you.religion, DID_TEAR_SPACE);
+        return;
+    }
+
     // Calculate how many extra banishments you get.
     const int power_level = _get_power_level(power, rarity);
     int nemelex_bonus = 0;
@@ -1605,6 +1613,12 @@ static void _warpwright_card(int power, deck_rarity_type rarity)
     if (player_in_branch(BRANCH_ABYSS))
     {
         mpr("The power of the Abyss blocks your magic.");
+        return;
+    }
+
+    if (you_worship(GOD_IVES))
+    {
+        _suppressed_card_message(you.religion, DID_TEAR_SPACE);
         return;
     }
 

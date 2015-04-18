@@ -78,6 +78,7 @@ static const char *_god_wrath_adjectives[] =
     "greed",            // Gozag (unused)
     "adversity",        // Qazlal
     "disappointment",   // Ru
+    "will",             // IVES
 };
 COMPILE_CHECK(ARRAYSZ(_god_wrath_adjectives) == NUM_GODS);
 
@@ -1695,6 +1696,79 @@ static bool _qazlal_retribution()
 
     return true;
 }
+/**
+ * Call down the wrath of IVES upon the player!
+ *
+ * Spacetime-fuckery
+ *
+ * @return Whether to take further divine wrath actions afterward.
+ */
+
+ static void _IVES_summon(int crys)
+{
+
+    mgen_data temp =
+    mgen_data::hostile_at(MONS_NO_MONSTER,
+                              _god_wrath_name(GOD_IVES),
+                              true, 0, 0, you.pos(), 0, GOD_IVES);
+    temp.hd = you.experience_level;
+    temp.extra_flags |= (MF_NO_REWARD | MF_HARD_RESET);
+
+    int how_many = 1 + (you.experience_level / 4);
+        if(crys==1) how_many = 1;
+    bool success = false;
+    for (int i = 0; i < how_many; i++)
+    {
+        if(crys==1) temp.cls = MONS_DIAMOND_OBELISK;
+        else temp.cls = MONS_CRYSTAL_GUARDIAN;
+        if (create_monster(temp, false))
+            success = true;
+    }
+
+    if (success)
+        simple_god_message(" sends out crystal creatures from slips in space!", GOD_IVES);
+    else
+        simple_god_message(" space seems rather normal.", GOD_IVES);
+}
+
+static bool _ives_retribution(){
+
+ int tension = get_tension(GOD_IVES);
+ int wrath_value = random2(tension);
+    // Determine the level of wrath
+    int wrath_type = 0;
+    if (wrath_value < 2)       { wrath_type = 0; }
+    else if (wrath_value < 4)  { wrath_type = 1; }
+    else if (wrath_value < 8)  { wrath_type = 2; }
+    else if (wrath_value < 16) { wrath_type = 3; }
+    else                       { wrath_type = 4; }
+
+  switch (random2(3))
+    {
+    case 0:
+
+        god_speaks(GOD_IVES, "A strange hole emerges on the floor.");
+        you.do_shaft();
+        break;
+    case 1:
+        _IVES_summon(1); // obelisk
+        break;
+    case 2:
+        simple_god_message(" coagulates space around you!",GOD_IVES);
+        slow_player(100);
+        break;
+    case 3:
+        simple_god_message(" anchors you in the plane!", GOD_IVES);
+        you.set_duration(DUR_DIMENSION_ANCHOR, 250);
+        break;
+    case 4: // crystal guardians
+        _IVES_summon(2);
+        break;
+    }
+
+    return true;
+
+}
 
 bool divine_retribution(god_type god, bool no_bonus, bool force)
 {
@@ -1739,7 +1813,7 @@ bool divine_retribution(god_type god, bool no_bonus, bool force)
     case GOD_CHEIBRIADOS:   do_more = _cheibriados_retribution(); break;
     case GOD_DITHMENOS:     do_more = _dithmenos_retribution(); break;
     case GOD_QAZLAL:        do_more = _qazlal_retribution(); break;
-
+    case GOD_IVES:          do_more = _ives_retribution(); break;
     case GOD_ASHENZARI:
     case GOD_GOZAG:
     case GOD_RU:
@@ -1952,3 +2026,5 @@ void gozag_incite(monster *mon)
     if (success)
         view_update_at(mon->pos());
 }
+
+

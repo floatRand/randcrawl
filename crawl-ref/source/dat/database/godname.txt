@@ -67,6 +67,10 @@ Ru lastname
 
 Ru the Awakened
 %%%%
+IVES lastname
+
+IVES the Architect
+%%%%
 Xom lastname
 
 w:280

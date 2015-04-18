@@ -230,6 +230,32 @@ bool is_evil_item(const item_def& item)
     }
 }
 
+bool is_spacetearing_item(const item_def& item)
+{
+       switch (item.base_type)
+    {
+    case OBJ_WEAPONS:
+        {
+        const int item_brand = get_weapon_brand(item);
+        return item_brand == SPWPN_DISTORTION || item_brand == SPWPN_CHAOS;
+        }
+        break;
+    case OBJ_WANDS:
+        return item.sub_type == WAND_TELEPORTATION || item.sub_type == WAND_RANDOM_EFFECTS;
+    case OBJ_POTIONS:
+    case OBJ_SCROLLS:
+        return item.sub_type == SCR_TELEPORTATION || item.sub_type == SCR_BLINKING;
+        break;
+    case OBJ_STAVES:
+    case OBJ_BOOKS:
+        return _is_bookrod_type(item, is_spacetearing_spell);
+    case OBJ_RODS:
+    case OBJ_MISCELLANY:
+    default:
+        return false;
+    }
+}
+
 bool is_unclean_item(const item_def& item)
 {
     if (is_unrandom_artefact(item))
@@ -523,6 +549,21 @@ bool is_fiery_spell(spell_type spell)
     return bool(disciplines & SPTYP_FIRE);
 }
 
+bool is_spacetearing_spell(spell_type spell)
+{
+    const spschools_type disciplines = get_spell_disciplines(spell);
+
+        if(spell == SPELL_ABJURATION) return false;
+        else if(spell == SPELL_AURA_OF_ABJURATION) return false;
+        else if(spell == SPELL_SUMMON_LIGHTNING_SPIRE) return false; // specifically constructs
+        else if(spell == SPELL_SHADOW_CREATURES) return false; // constructs creatures from shadows
+        else if(spell == SPELL_DRAGON_CALL) return false; // calls dragons!
+        else if(spell == SPELL_HAUNT) return false; // doesn't really care for undead, but these already exist on plane
+        else if(spell == SPELL_FORCEFUL_DISMISSAL) return false;
+
+    return (bool(disciplines & SPTYP_SUMMONING) || bool(disciplines & SPTYP_TRANSLOCATION));
+}
+
 static bool _your_god_hates_spell(spell_type spell)
 {
     return god_hates_spell(spell, you.religion);
@@ -611,6 +652,12 @@ conduct_type god_hates_item_handling(const item_def &item)
         }
         break;
 
+    case GOD_IVES:
+        if (item_type_known(item)
+            && (is_spacetearing_item(item)))
+        {
+            return DID_TEAR_SPACE;
+        }
     default:
         break;
     }
@@ -716,6 +763,9 @@ bool god_dislikes_spell_discipline(spschools_type discipline, god_type god)
 
     case GOD_DITHMENOS:
         return bool(discipline & SPTYP_FIRE);
+
+    case GOD_IVES:
+        return bool(discipline & SPTYP_TRANSLOCATION);
 
     default:
         break;

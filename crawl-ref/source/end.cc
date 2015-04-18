@@ -262,7 +262,14 @@ NORETURN void end_game(scorefile_entry &se)
                 }
                 break;
             }
-
+            case GOD_IVES:
+            {
+              if (se.get_death_type() != KILLED_BY_DISINT
+                    && se.get_death_type() != KILLED_BY_LAVA)
+                {
+                    mprf(MSGCH_GOD, "Your body falls into some unseen crack in space.");
+                }
+            }
             case GOD_YREDELEMNUL:
                 if (you.undead_state() != US_ALIVE)
                     simple_god_message(" claims you as an undead slave.");

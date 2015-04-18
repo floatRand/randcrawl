@@ -365,6 +365,13 @@ const char* god_gain_power_messages[NUM_GODS][MAX_GOD_ABILITIES] =
       "gather your power into a mighty leap",
       "wreak a terrible wrath on your foes"
     },
+      //IVES
+    { "You are protected from banishment and you are more difficult to hit",
+      "Your enemies are bound in space if they come adjacent to you",
+      "ignore gravity at will",
+      "drive summoned presences out of your field of vision",
+      "create an almighty repulsion, knocking enemies away from you"
+    },
 };
 
 /**
@@ -509,6 +516,13 @@ const char* god_lose_power_messages[NUM_GODS][MAX_GOD_ABILITIES] =
       "use your power to heal your body and restore your magic",
       "gather your power into a mighty leap",
       "wreak a terrible wrath on all visible foes"
+    },
+       //IVES
+    { "You no longer are protected from banishment",
+      "anchor your enemies into space",
+      "ignore gravity at will",
+      "drive away summoned creatures",
+      "push away foes with almight repulsion"
     },
 };
 
@@ -667,6 +681,9 @@ string get_god_likes(god_type which_god, bool verbose)
       likes.emplace_back("you make personal sacrifices");
       break;
 
+    case GOD_IVES:
+        likes.emplace_back("explore the continuum");
+        break;
     default:
         break;
     }
@@ -861,6 +878,9 @@ string get_god_likes(god_type which_god, bool verbose)
         really_likes.emplace_back("you kill beings that bring fire to the "
                                   "dungeon");
         break;
+    case GOD_IVES:
+        really_likes.emplace_back("you kill warpers of space-time");
+        break;
     default:
         break;
     }
@@ -950,6 +970,11 @@ string get_god_dislikes(god_type which_god, bool /*verbose*/)
         dislikes.emplace_back("you use fiery magic or items");
         break;
 
+    case GOD_IVES:
+        dislikes.emplace_back("you use items that harm the continuum");
+        dislikes.emplace_back("you use translocational magic or magic that brings"
+                              "creatures from other planes");
+        break;
     default:
         break;
     }
@@ -1348,7 +1373,7 @@ static monster_type _yred_servants[] =
     MONS_MUMMY, MONS_WIGHT, MONS_FLYING_SKULL, MONS_WRAITH,
     MONS_VAMPIRE, MONS_PHANTASMAL_WARRIOR, MONS_SKELETAL_WARRIOR,
     MONS_FLAYED_GHOST, MONS_DEATH_COB, MONS_GHOUL, MONS_BONE_DRAGON,
-    MONS_PROFANE_SERVITOR, MONS_DEATHS_HAND
+    MONS_PROFANE_SERVITOR
 };
 
 #define MIN_YRED_SERVANT_THRESHOLD 3
@@ -2064,6 +2089,7 @@ string god_name(god_type which_god, bool long_name)
     case GOD_GOZAG:         return "Gozag";
     case GOD_QAZLAL:        return "Qazlal";
     case GOD_RU:            return "Ru";
+    case GOD_IVES:          return "IVES";
     case GOD_JIYVA: // This is handled at the beginning of the function
     case NUM_GODS:          return "Buggy";
     }
@@ -2505,6 +2531,10 @@ static void _gain_piety_point()
 
                     you.one_time_ability_used.set(you.religion);
                     break;
+                case GOD_IVES:
+                    simple_god_message(" will now allow to teleport to anywhere... once.");
+                    break;
+
                 default:
                     break;
             }
@@ -3005,7 +3035,15 @@ void excommunication(god_type new_god, bool immediate)
         }
         _set_penance(old_god, 25);
         break;
-
+    case GOD_IVES:
+        if (you.duration[DUR_DIMENSION_ANCHOR])
+        {
+            mprf(MSGCH_DURATION,
+                "You feel less bound to geometry of this plane.");
+            you.duration[DUR_DIMENSION_ANCHOR] = 0;
+        }
+        _set_penance(old_god,40);
+        break;
     case GOD_CHEIBRIADOS:
     default:
         _set_penance(old_god, 25);
@@ -3437,7 +3475,11 @@ void join_religion(god_type which_god, bool immediate)
             if (you.skills[sk])
                 you.train[sk] = 0;
     }
-
+    // IVES' dimension lock
+    if (you_worship(GOD_IVES))
+    {
+            simple_god_message(" locks you in space.");
+    }
     // Move gold to top of piles with Gozag.
     if (you_worship(GOD_GOZAG))
         add_daction(DACT_GOLD_ON_TOP);
@@ -3923,6 +3965,9 @@ bool god_hates_spell(spell_type spell, god_type god, bool rod_spell)
         if (is_fiery_spell(spell))
             return true;
         break;
+    case GOD_IVES:
+        if (is_spacetearing_spell(spell)) return true;
+        break;
     default:
         break;
     }
@@ -3934,6 +3979,8 @@ bool god_loathes_spell(spell_type spell, god_type god)
     if (spell == SPELL_NECROMUTATION && is_good_god(god))
         return true;
     if (spell == SPELL_STATUE_FORM && god == GOD_YREDELEMNUL)
+        return true;
+    if (spell == SPELL_SINGULARITY && god == GOD_IVES)
         return true;
     return false;
 }
@@ -3953,6 +4000,8 @@ bool god_hates_ability(ability_type ability, god_type god)
             return god == GOD_DITHMENOS;
         case ABIL_EVOKE_BERSERK:
             return god == GOD_CHEIBRIADOS;
+        case ABIL_BLINK:
+            return god == GOD_IVES;
         default:
             break;
     }
@@ -4071,7 +4120,6 @@ void handle_god_time(int /*time_delta*/)
             if (one_chance_in(35))
                 lose_piety(1);
             break;
-
         case GOD_ELYVILON:
             if (one_chance_in(50))
                 lose_piety(1);
@@ -4081,7 +4129,10 @@ void handle_god_time(int /*time_delta*/)
             if (one_chance_in(100))
                 lose_piety(1);
             break;
-
+        case GOD_IVES:
+            if (one_chance_in(18))
+                lose_piety(1);
+            break;
         case GOD_FEDHAS:
         case GOD_CHEIBRIADOS:
             // These gods do not lose piety  over time but we need a case here
@@ -4162,7 +4213,8 @@ int god_colour(god_type god) // mv - added
     case GOD_QAZLAL:
     case GOD_RU:
         return BROWN;
-
+    case GOD_IVES:
+        return BLUE;
     case GOD_NO_GOD:
     case NUM_GODS:
     case GOD_RANDOM:
@@ -4246,6 +4298,9 @@ colour_t god_message_altar_colour(god_type god)
     case GOD_QAZLAL:
     case GOD_RU:
         return BROWN;
+
+    case GOD_IVES:
+        return coinflip() ? BLUE : LIGHTBLUE;
 
     default:
         return YELLOW;

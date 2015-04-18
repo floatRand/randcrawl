@@ -4318,6 +4318,9 @@ bool monster::no_tele(bool calc_unid, bool permit_id, bool blinking) const
     if (has_notele_item(calc_unid))
         return true;
 
+    if (get_ench(ENCH_DIMENSION_ANCHOR).duration>0)
+        return true;
+
     return false;
 }
 
@@ -5576,10 +5579,22 @@ static bool _mons_is_fiery(int mc)
            || mc == MONS_ORB_OF_FIRE;
 }
 
+static bool _mons_is_spacetearing(int mc)
+{
+    return mc == MONS_WORLDBINDER
+        || mc == MONS_CORRUPTER;
+}
+
 bool monster::is_fiery() const
 {
     return _mons_is_fiery(type);
 }
+
+bool monster::is_spaceting() const
+{
+    return _mons_is_spacetearing(type) || mons_is_spacetearer(this);
+}
+
 
 static bool _mons_is_skeletal(int mc)
 {

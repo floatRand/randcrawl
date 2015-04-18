@@ -68,7 +68,8 @@ static const char *conducts[] =
     "Souled Friend Died", "Attack In Sanctuary",
     "Kill Artificial", "Destroy Spellbook",
     "Exploration", "Desecrate Holy Remains", "Seen Monster",
-    "Fire", "Kill Fiery", "Sacrificed Love"
+    "Fire", "Kill Fiery", "Sacrificed Love", "Use Translocations",
+    "Kill space-violators"
 };
 COMPILE_CHECK(ARRAYSZ(conducts) == NUM_CONDUCTS);
 
@@ -446,6 +447,13 @@ static peeve_map divine_peeves[] =
     peeve_map(),
     // GOD_RU,
     peeve_map(),
+    // GOD_IVES
+    {
+        { DID_TEAR_SPACE, {
+            1, 1, " forgives your inadvertent space-time distortion, just this once.",
+            " does not appreciate you tearing the fragile space-time!", nullptr, -5
+        } },
+    },
 };
 
 
@@ -838,6 +846,23 @@ static like_map divine_likes[] =
             }
         } },
     },
+    // GOD_IVES
+    {
+        { DID_KILL_SPACETEARER, {
+            -6, 10, 0, " appreciates your killing of a violator of the space-time."
+        } },
+        { DID_EXPLORATION, {
+            0, 0, 0, nullptr,
+            [] (int &piety, int &denom, const monster* /*victim*/)
+            {
+                // piety = denom = level at the start of the function
+                piety = 10;
+            }
+        } },
+    },
+
+
+
 };
 
 /**

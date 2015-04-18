@@ -193,7 +193,10 @@ ability_type god_abilities[NUM_GODS][MAX_GOD_ABILITIES] =
       ABIL_NON_ABILITY, ABIL_QAZLAL_DISASTER_AREA },
     // Ru
     { ABIL_NON_ABILITY, ABIL_NON_ABILITY, ABIL_RU_DRAW_OUT_POWER,
-      ABIL_RU_POWER_LEAP, ABIL_RU_APOCALYPSE }
+      ABIL_RU_POWER_LEAP, ABIL_RU_APOCALYPSE },
+    // IVES
+    { ABIL_NON_ABILITY, ABIL_IVES_ANTIGRAVITY, ABIL_IVES_ABJURATION,
+      ABIL_NON_ABILITY, ABIL_IVES_REPULSION_BLAST }
 };
 
 // The description screen was way out of date with the actual costs.
@@ -461,6 +464,15 @@ static const ability_def Ability_List[] =
     { ABIL_QAZLAL_DISASTER_AREA, "Disaster Area", 7, 0, 0,
       generic_cost::range(10, 14), 0, ABFLAG_NONE },
 
+    // IVES
+    { ABIL_IVES_ANTIGRAVITY, "Anti-gravity",
+      0, 0, 0, 0, 0, ABFLAG_NONE },
+    { ABIL_IVES_ABJURATION, "Purge Continuum",
+       5, 0, 200, 8, 0, ABFLAG_NONE},
+    { ABIL_IVES_REPULSION_BLAST, "Great Repulsion",
+       7, 0, 400, 10, 0, ABFLAG_EXHAUSTION},
+    { ABIL_IVES_GREATERTELE, "Forge Gateway",
+       0, 0, 0, 0, 0, ABFLAG_NONE},
     { ABIL_STOP_RECALL, "Stop Recall", 0, 0, 0, 0, 0, ABFLAG_NONE},
 
     // zot defence abilities
@@ -1326,6 +1338,17 @@ talent get_talent(ability_type ability, bool check_confused)
         failure = 60 - (you.piety / 20) - you.skill(SK_EVOCATIONS, 5);
         break;
 
+    case ABIL_IVES_ABJURATION:
+        invoc = true;
+        failure = 40 - (you.piety / 20) - you.skill(SK_INVOCATIONS, 5);
+        break;
+
+    case ABIL_IVES_REPULSION_BLAST:
+        invoc = true;
+        failure = 60 - (you.piety / 20) - you.skill(SK_INVOCATIONS, 5);
+        break;
+
+    case ABIL_IVES_GREATERTELE:
     case ABIL_RENOUNCE_RELIGION:
     case ABIL_CONVERT_TO_BEOGH:
         invoc = true;
@@ -1755,7 +1778,10 @@ static bool _check_ability_possible(const ability_def& abil,
             return false;
         }
         return true;
-
+    case ABIL_IVES_ABJURATION:
+    case ABIL_IVES_ANTIGRAVITY:
+    case ABIL_IVES_GREATERTELE:
+    case ABIL_IVES_REPULSION_BLAST:
     default:
         return true;
     }
@@ -3262,6 +3288,27 @@ static spret_type _do_ability(const ability_def& abil, bool fail)
         you.increase_duration(DUR_EXHAUSTED, 30 + random2(20));
         break;
 
+
+    case ABIL_IVES_ANTIGRAVITY:
+         IVES_antigravity();
+    break;
+    case ABIL_IVES_REPULSION_BLAST:
+        fail_check();
+        if (you.duration[DUR_EXHAUSTED])
+        {
+            mpr("You're too exhausted to create a repulsion.");
+            return SPRET_ABORT;
+        }
+        you.increase_duration(DUR_EXHAUSTED, 20 + random2(10));
+        IVES_repulsion();
+    break;
+    case ABIL_IVES_ABJURATION:
+        fail_check();
+        IVES_abjuration();
+    break;
+    case ABIL_IVES_GREATERTELE:
+        IVES_gateway();
+    break;
     case ABIL_RENOUNCE_RELIGION:
         fail_check();
         if (yesno("Really renounce your faith, foregoing its fabulous benefits?",
@@ -4063,6 +4110,9 @@ vector<ability_type> get_god_abilities(bool include_unusable, bool ignore_piety)
 
     if (can_do_capstone_ability(GOD_ZIN))
         abilities.push_back(ABIL_ZIN_CURE_ALL_MUTATIONS);
+
+    if (can_do_capstone_ability(GOD_IVES))
+        abilities.push_back(ABIL_IVES_GREATERTELE);
 
     return abilities;
 }

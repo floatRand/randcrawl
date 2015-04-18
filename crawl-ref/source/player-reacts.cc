@@ -412,6 +412,7 @@ void player_reacts_to_monsters()
                          (2 * BASELINE_DELAY), true);
     }
 
+    if(you_worship(GOD_IVES) && you.piety>=piety_breakpoint(1)) IVES_dimensional_anchoring(); // handle IVES' anchoring
     handle_starvation();
     _decrement_paralysis(you.time_taken);
     _decrement_petrification(you.time_taken);
@@ -1051,8 +1052,12 @@ static void _decrement_durations()
     _decrement_a_duration(DUR_WEAK, delay,
                           "Your attacks no longer feel as feeble.");
 
-    _decrement_a_duration(DUR_DIMENSION_ANCHOR, delay,
+    if(!you_worship(GOD_IVES))
+        {
+        _decrement_a_duration(DUR_DIMENSION_ANCHOR, delay,
                           "You are no longer firmly anchored in space.");
+        }
+    else{ you.duration[DUR_DIMENSION_ANCHOR] = 10; }
 
     _decrement_a_duration(DUR_SICKENING, delay);
 

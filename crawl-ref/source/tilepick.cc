@@ -443,6 +443,8 @@ tileidx_t tileidx_feature_base(dungeon_feature_type feat)
         return TILE_DNGN_ALTAR_QAZLAL;
     case DNGN_ALTAR_RU:
         return TILE_DNGN_ALTAR_RU;
+    case DNGN_ALTAR_IVES:
+        return TILE_DNGN_ALTAR_IVES;
     case DNGN_FOUNTAIN_BLUE:
         return TILE_DNGN_BLUE_FOUNTAIN;
     case DNGN_FOUNTAIN_SPARKLING:
@@ -5445,9 +5447,16 @@ tileidx_t tileidx_ability(const ability_type ability)
         return TILEG_ABILITY_RU_POWER_LEAP;
     case ABIL_RU_APOCALYPSE:
         return TILEG_ABILITY_RU_APOCALYPSE;
+    // IVES
+    case ABIL_IVES_ANTIGRAVITY:
+        return TILEG_ABILITY_IVES_ANTIGRAVITY;
+    case ABIL_IVES_ABJURATION:
+        return TILEG_ABILITY_IVES_ABJURATION;
+    case ABIL_IVES_GREATERTELE:
+        return TILEG_ABILITY_IVES_GREATERTELE;
+    case ABIL_IVES_REPULSION_BLAST:
+        return TILEG_ABILITY_IVES_REPULSION_BLAST;
 
-    case ABIL_RU_SACRIFICE_PURITY:
-        return TILEG_ABILITY_RU_SACRIFICE_PURITY;
     case ABIL_RU_SACRIFICE_WORDS:
         return TILEG_ABILITY_RU_SACRIFICE_WORDS;
     case ABIL_RU_SACRIFICE_DRINK:

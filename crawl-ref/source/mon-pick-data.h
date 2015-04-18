@@ -490,6 +490,7 @@ static const pop_entry pop_crypt[] =
   {  2,  5,   95, SEMI, MONS_SHADOW_WRAITH },
   {  2,  7,   40, SEMI, MONS_REAPER },
   {  2,  7,   55, PEAK, MONS_LICH },
+  {  2,  7,   55, PEAK, MONS_DEATHS_HAND },
   {  3,  7,   15, PEAK, MONS_ANCIENT_LICH },
   { 0,0,0,FLAT,MONS_0 }
 };
@@ -506,6 +507,7 @@ static const pop_entry pop_tomb[] =
   { -1,  9,  335, SEMI, MONS_MUMMY_PRIEST },
   {  4,  5,    3, RISE, MONS_GREATER_MUMMY },
   {  3,  5,    6, FLAT, MONS_LICH },
+  {  3,  5,    3, FLAT, MONS_DEATHS_HAND },
   {  3,  5,    3, SEMI, MONS_ANCIENT_LICH },
   {  1,  5,  200, FLAT, MONS_ANUBIS_GUARD },
   {  1,  5,  200, FLAT, MONS_USHABTI },
@@ -688,6 +690,7 @@ static const pop_entry pop_tar[] =
   {  1,  7,  230, SEMI, MONS_GHOST_CRAB },
   {  1,  7,   89, FLAT, MONS_DEATH_DRAKE },
   {  1,  7,   89, SEMI, MONS_SHADOW_DRAGON },
+  {  1,  9,  125, PEAK, MONS_DEATHS_HAND },
   { 0,0,0,FLAT,MONS_0 }
 };
 
@@ -827,6 +830,7 @@ static const pop_entry pop_abyss[] =
   {  1,  5,    9, FLAT, MONS_REVENANT },
   {  1,  5,   46, FLAT, MONS_LICH },
   {  1,  5,    8, FLAT, MONS_ANCIENT_LICH },
+  {  1,  5,    9, FLAT, MONS_DEATHS_HAND },
   // Thematic branch representatives, outsiders
   {  1,  5,    8, FLAT, MONS_ORC_SORCERER },
   {  1,  5,    4, FLAT, MONS_DEEP_ELF_PRIEST },

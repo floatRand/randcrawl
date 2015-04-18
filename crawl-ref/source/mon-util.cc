@@ -675,6 +675,15 @@ bool mons_is_fiery(const monster* mon)
            || mon->has_spell_of_type(SPTYP_FIRE);
 }
 
+// IVES hates translocational creatures/casters
+bool mons_is_spacetearer(const monster* mon)
+{
+    return mon->has_attack_flavour(AF_DISTORT)
+           || mon->has_attack_flavour(AF_CHAOS)
+           || mon->has_attack_flavour(AF_BLINK)
+           || mon->has_spell_of_type(SPTYP_TRANSLOCATION);
+}
+
 bool mons_is_projectile(monster_type mc)
 {
     return mons_class_flag(mc, M_PROJECTILE);
